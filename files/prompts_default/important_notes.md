@@ -1,0 +1,40 @@
+The first name is the name of the patient and the second name is the name of the referrer.
+Any conditions listed immediately after the name of the referrer should be included in the main heading Diagnosis at the top of the letter
+- If diagnosis, visual acuity, intraocular pressure, or next review are stated anywhere in the transcript, include them as main headings at the top of the letter in the correct format:
+Diagnosis: … Visual acuity: … Intraocular pressure: … Next review: …
+- Instead of "On examination, bilateral cataracts" use "There are bilateral cataracts"
+- Instead of "On examination, corrected visual acuity is 6/6 in each eye" use "Corrected visual acuity is 6/6 in each eye"
+- Use the patient’s full name for the first mention or when clarity requires it (e.g., “Many thanks for asking me to see John Smith”).
+- The patient’s name is [full name] — use their full name on first mention, then the correct gendered pronouns (he/him, she/her, or they/them) for subsequent mentions, avoiding phrases like “this patient” unless absolutely necessary
+- Instead of "optic nerves" use "optic discs"
+- Do not describe investigations. Instead of "Retinal photography and optical coherence tomography demonstrate healthy optic nerves and maculae" " use "The optic discs and maculae are healthy"
+- Do not describe investigations. Instead of "Optical coherence tomography demonstrates very mild macular irregularities bilaterally" use "There are mild bilateral macular changes"
+- If the statement “The optic discs and maculae are healthy” is included, do not follow it with any additional negative findings such as “with no evidence of glaucoma or macular pathology” or “with no evidence of other posterior segment pathology.” The sentence should stand alone without qualifiers
+- Instead of "I will review the patient in three weeks to assess symptom progression and perform visual field testing" use "I will see her/him in three weeks to assess symptoms and for visual fields"
+- Plan section: Include mention of the type of intraocular lens (e.g., “extended depth of focus intraocular lenses”). Do not repeat which eye will be operated on first in the Plan section — that should appear only once in the body of the letter
+- Instead of “There are bilateral cataracts, with the left eye being worse than the right” use “There are bilateral cataracts, left greater than right
+- Instead of "The surgery will be performed as a day-only procedure with extended depth of focus intraocular lenses, which will provide good distance and intermediate vision with reduced dependence on glasses” use “She/He will have extended depth of focus intraocular lenses.” or "She/He will have monofocal intraocular lenses". Do not need to put the qualifier about providing good distance and intermediate vision.
+- Assumptions: “Day-only surgery” and explanations about vision improvement are assumed and should not be included unless specifically requested
+- Replace the phrase “Her vision remains stable and she reports no concerns about her current visual function” with “Her vision remains stable and she reports no concerns.” Keep the wording concise and professional
+- Replace “There are bilateral cataracts, which have progressed slightly since her last visit. However, as they are not causing any visual symptoms that concern her, surgery is not indicated at this time.” with “There are bilateral cataracts, which have progressed slightly since her last visit. However, they are not worrying her enough to warrant surgery at this time.”
+- Replace “tearing” with “epiphora.” For example, change “She experiences dry eyes with associated tearing” to “She experiences dry eyes with associated epiphora.”
+- if the term “bilateral” is used, place it before the diagnosis. For example, change “Geographic atrophy bilateral” to “Bilateral geographic atrophy
+- If referral to Vision Australia is stated, replace “referral to Vision Australia for practical home modifications” with “referral to Vision Australia for low vision aids and practical home modifications.”
+- Replace the term “tablets” with “medication.” For example, change “diabetes tablets” to “diabetes medication.”
+- Replace “There is no evidence of diabetic retinopathy despite [his/her] history of type 2 diabetes” with “There is no evidence of diabetic retinopathy.” Remove qualifiers about medical history
+- Replace specific follow-up instructions with the referrer. For example change “She will continue with her annual diabetes screening with you” with the general phrase “I have asked her to continue to see you as required.”
+- Instead of "I will perform bilateral cataract surgery" use "We will proceed with bilateral cataract surgery"
+- Replace “I will operate on the left eye first, followed by the right eye [time interval] later” with “We will proceed with left, then right, cataract surgery.” Omit any time interval.
+- Replace "Posterior capsule opacity" with "posterior capsule opacification"
+- Replace "YAG laser posterior capsulotomy" with YAG laser capsulotomy"
+- In the Plan section, if a procedure is mentioned (e.g., cataract surgery, YAG laser capsulotomy), phrase it as “Booked for [procedure]” rather than describing it in another way.
+- Do not use phrases such as “on examination” or “examination reveals.” State the finding or diagnosis plainly. For example, change “Examination reveals bilateral posterior vitreous detachment with floaters visible in both eyes” to “There are bilateral posterior vitreous detachments.”
+- Use the phrase “treated with” instead of reversing the order. For example, change “His wife had similar symptoms four years ago and was laser treated” to “His wife had similar symptoms four years ago and was treated with laser.”
+- Remove qualifiers after the main statement when they describe the reason or cause. For example, change “Joan continues to read with some difficulty due to reduced print clarity” to “Joan continues to read with some difficulty.”
+- Instead of "History of bilateral cataracts - previously treated" use "Previous bilateral cataract surgery"
+- "VA" means the same as "Visual Acuity". If this is stated anywhere in the transcript, include them as main headings at the top of the letter in the correct format:
+- Diagnosis: … Visual acuity: … Intraocular pressure: … Next review: …
+- "IOP" means the same as "Intraocular Pressure". If this is  stated anywhere in the transcript, include them as main headings at the top of the letter in the correct format:
+- Diagnosis: … Visual acuity: … Intraocular pressure: … Next review: …
+- Instead of "Her blood sugar control has been problematic with levels fluctuating between very high and very low readings" use "Her glycaemic control has been variable"
+- When discussing diabetic retinopathy, do not use microhaemorrhages. The findings may be micraneurysms, haemorrhages, hard exudate and oedema, if they are specifically mentioned
