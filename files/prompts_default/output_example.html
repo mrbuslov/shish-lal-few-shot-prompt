@@ -1,165 +1,29 @@
+<!DOCTYPE html>
 <html>
-
 <head>
-    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    <meta http-equiv="Content-Style-Type" content="text/css" />
-    <meta name="generator" content="Aspose.Words for .NET 25.8.0" />
-    <title></title>
-    <style type="text/css">
-        body {
-            widows: 0;
-            orphans: 0;
-            font-family: 'Liberation Serif';
-            font-size: 12pt
-        }
+    <meta charset="utf-8">
+    <title>Medical Report</title>
+    </head>
+<body style="font-family:Arial, sans-serif; font-size:11pt; line-height:1.2; margin:20pt">
+    <div class="header" style="font-weight:bold; margin-bottom:15pt">
+        {{recipients_info}}
+    </div>
 
-        p {
-            margin: 0pt
-        }
+    <div class="diagnosis-line" style="margin:10pt 0">
+        <span class="label" style="font-weight:bold">Diagnosis:</span><span class="tab" style="display:inline-block; width:40pt" width="40pt"></span>{{diagnosis}}
+    </div>
 
-        table {
-            margin-top: 0pt;
-            margin-bottom: 0pt
-        }
+    <div class="measurement-line" style="margin:8pt 0; font-size:11pt">
+        <span class="label" style="font-weight:bold">Corrected</span><br>
+        <span class="label" style="font-weight:bold">Visual Acuity:</span><span class="tab" style="display:inline-block; width:40pt" width="40pt"></span><span class="label" style="font-weight:bold">Right:</span> {{corrected_visual_acuity_right}}<span class="wide-tab" style="display:inline-block; width:80pt" width="80pt"></span><span class="label" style="font-weight:bold">Left:</span> {{corrected_visual_acuity_left}}
+    </div>
 
-        .BodyText {
-            margin-top: 0pt;
-            margin-bottom: 7pt;
-            line-height: 115%;
-            widows: 0;
-            orphans: 0;
-            font-family: 'Liberation Serif';
-            font-size: 12pt;
-            color: #000000;
-            -aw-style-name: body-text
-        }
+    <div class="next-review-line" style="margin:10pt 0">
+        <span class="label" style="font-weight:bold">Plan:</span><span class="tab" style="display:inline-block; width:40pt" width="40pt"></span>{{next_review}}
+    </div>
 
-        .Caption {
-            margin-top: 6pt;
-            margin-bottom: 6pt;
-            line-height: normal;
-            widows: 0;
-            orphans: 0;
-            font-family: 'Liberation Serif';
-            font-size: 12pt;
-            font-style: italic;
-            color: #000000;
-            -aw-style-name: caption
-        }
-
-        .Heading {
-            margin-top: 12pt;
-            margin-bottom: 6pt;
-            page-break-after: avoid;
-            widows: 0;
-            orphans: 0;
-            font-family: 'Liberation Sans';
-            font-size: 14pt;
-            color: #000000
-        }
-
-        .Index {
-            widows: 0;
-            orphans: 0;
-            font-family: 'Liberation Serif';
-            font-size: 12pt;
-            color: #000000
-        }
-
-        .List {
-            margin-top: 0pt;
-            margin-bottom: 7pt;
-            text-indent: 0pt;
-            line-height: 115%;
-            widows: 0;
-            orphans: 0;
-            font-family: 'Liberation Serif';
-            font-size: 12pt;
-            color: #000000;
-            -aw-style-name: list;
-            -aw-style-parent: body-text
-        }
-
-        .Normal0 {
-            margin-top: 0pt;
-            margin-bottom: 0pt;
-            text-align: left;
-            line-height: normal;
-            widows: 0;
-            orphans: 0;
-            font-family: Arial;
-            font-size: 12pt;
-            color: #000000;
-            -aw-style-name: '[Normal]'
-        }
-    </style>
-</head>
-
-<body>
-    <div>
-        <p class="Normal0" style="font-size:10pt"><span style="color:#000040; -aw-import:ignore">&#xa0;</span></p>
-        <p style="text-align:justify; font-size:10pt"><span style="font-family:Arial; font-weight:bold">{{recipients_info}}</span></p>
-        <table cellspacing="0" cellpadding="0" style="width:425.5pt; border-collapse:collapse">
-            <tr>
-                <td style="width:107.75pt; padding-right:1.8pt; padding-left:1.8pt; vertical-align:top">
-                    <p style="text-align:justify; font-size:10pt"><span
-                            style="font-family:Arial; font-weight:bold">Diagnosis:</span></p>
-                </td>
-                <td style="width:310.5pt; padding-right:1.8pt; padding-left:1.8pt; vertical-align:top">
-                    <p style="text-align:justify; font-size:10pt"><span style="font-family:Arial">{{diagnosis}}</span></p>
-                    <p style="text-align:justify; font-size:10pt"><span
-                            style="font-family:Arial; font-weight:bold; -aw-import:ignore">&#xa0;</span></p>
-                </td>
-            </tr>
-        </table>
-        <p style="text-align:justify; font-size:10pt"><span
-                style="font-family:Arial; font-weight:bold; -aw-import:ignore">&#xa0;</span></p>
-        <p style="text-align:justify; font-size:10pt"><span style="font-family:Arial; font-weight:bold">Corrected</span>
-        </p>
-        <p style="text-align:justify; font-size:10pt"><span style="font-family:Arial; font-weight:bold">Visual
-                Acuity:</span><span
-                style="width:47.27pt; font-family:Arial; font-weight:bold; display:inline-block; -aw-tabstop-align:left; -aw-tabstop-pos:113.4pt">&#xa0;</span><span
-                style="font-family:Arial; font-weight:bold">Right: </span><span
-                style="font-family:Arial">{{corrected_visual_acuity_right}}</span><span
-                style="font-family:Arial; -aw-import:spaces">&#xa0;&#xa0;&#xa0;&#xa0;&#xa0;&#xa0;&#xa0;&#xa0;&#xa0;
-            </span><span
-                style="width:40.06pt; font-family:Arial; display:inline-block; -aw-tabstop-align:left; -aw-tabstop-pos:226.8pt">&#xa0;</span><span
-                style="font-family:Arial; font-weight:bold">Left:</span><span style="font-family:Arial"> {{corrected_visual_acuity_left}}</span><span
-                style="font-family:Arial; -aw-import:spaces">&#xa0;&#xa0;&#xa0;&#xa0;&#xa0;&#xa0;&#xa0;&#xa0;&#xa0;&#xa0;&#xa0;&#xa0;&#xa0;
-            </span></p>
-        <p style="text-align:justify; font-size:10pt"><span
-                style="font-family:Arial; font-weight:bold; -aw-import:ignore">&#xa0;</span></p>
-        <p style="text-align:justify"><span style="font-family:Arial; font-size:10pt; font-weight:bold">Intraocular
-                Pressure:</span><span
-                style="width:12.8pt; font-family:Arial; font-size:10pt; font-weight:bold; display:inline-block; -aw-tabstop-align:left; -aw-tabstop-pos:113.4pt">&#xa0;</span><span
-                style="font-family:Arial; font-size:10pt; font-weight:bold">Right: </span><span
-                style="font-family:Arial; font-size:10pt">{{intraocular_pressure_right}}</span><span
-                style="width:41.18pt; font-family:Arial; font-size:10pt; display:inline-block; -aw-tabstop-align:left; -aw-tabstop-pos:226.8pt">&#xa0;</span><span
-                style="font-family:Arial; font-size:10pt; font-weight:bold">Left: </span><span
-                style="font-family:Arial; font-size:10pt">{{intraocular_pressure_left}}</span><span> </span></p>
-        <p style="text-align:justify; font-size:10pt"><span
-                style="font-family:Arial; font-weight:bold; font-style:italic; -aw-import:ignore">&#xa0;</span></p>
-        <table cellspacing="0" cellpadding="0" style="width:425.5pt; border-collapse:collapse">
-            <tr>
-                <td style="width:107.75pt; padding-right:1.8pt; padding-left:1.8pt; vertical-align:top">
-                    <p style="text-align:justify; font-size:10pt"><span style="font-family:Arial; font-weight:bold">Next
-                            review:</span></p>
-                </td>
-                <td style="width:310.5pt; padding-right:1.8pt; padding-left:1.8pt; vertical-align:top">
-                    <p style="text-align:justify; font-size:10pt"><span style="font-family:Arial">{{next_review}}</span></p>
-                    <p style="text-align:justify; font-size:10pt"><span
-                            style="font-family:Arial; font-weight:bold; font-style:italic; -aw-import:ignore">&#xa0;</span>
-                    </p>
-                </td>
-            </tr>
-        </table>
-        <p style="text-align:justify; font-size:10pt"><span style="font-family:Arial; -aw-import:ignore">&#xa0;</span>
-        </p>
+    <div class="content" style="margin:15pt 0; text-align:justify" align="justify">
         {{letter_to_patient}}
-        <p style="text-align:justify; font-size:8pt"><span
-                style="font-style:italic; color:#808080; -aw-import:spaces">&#xa0;&#xa0;&#xa0;&#xa0;&#xa0;&#xa0;&#xa0;&#xa0;&#xa0;&#xa0;&#xa0;&#xa0;&#xa0;
-            </span></p>
     </div>
 </body>
-
 </html>

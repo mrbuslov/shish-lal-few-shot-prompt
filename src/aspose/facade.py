@@ -6,7 +6,7 @@ from random import randint
 
 import html2text
 
-from .schemas import FileData
+from src.utils.schemas import FileData
 from httpx_manager.httpx_manager import httpx_manager
 
 

@@ -50,6 +50,7 @@ coverage.xml
 .hypothesis/
 .pytest_cache/
 cover/
+.claude
 
 # Translations
 *.mo
@@ -214,3 +215,5 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+conversion_temp/

@@ -12,4 +12,4 @@ class UploadBase64Request(BaseModel):
 
 
 class ProcessJsonRequest(BaseModel):
-    documents: list[dict]
+    document: dict

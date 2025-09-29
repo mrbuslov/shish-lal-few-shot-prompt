@@ -1,6 +1,7 @@
 import subprocess
 from fastapi import FastAPI
 from fastapi.responses import HTMLResponse
+from fastapi.staticfiles import StaticFiles
 import uvicorn
 from dotenv import load_dotenv
 from src.fastapi_app.routes import router as main_router
@@ -11,6 +12,10 @@ load_dotenv()
 app = FastAPI(
     title="Medical Text Processor", description="AI-powered medical text analysis"
 )
+
+# Mount static files
+app.mount("/static", StaticFiles(directory="static"), name="static")
+
 app.include_router(main_router)
 
 
