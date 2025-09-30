@@ -30,17 +30,17 @@ async def process_stage_one(text: str) -> LlmStageOutput:
         data = load_prompt_files()
         system_message = data["few_shot_prompt"].format(
             words_spelling=data["words_spelling"],
-            LLM_TEXT_PROCESSOR_OUTPUT_FORMAT=LLM_TEXT_PROCESSOR_OUTPUT_FORMAT,
+            LLM_TEXT_PROCESSOR_OUTPUT_FORMAT=json.dumps(LLM_TEXT_PROCESSOR_OUTPUT_FORMAT),
             few_shot_examples=data["examples"],
             important_notes=data["important_notes"],
         )
         print("Starting stage 1 processing...")
         response = await llm.ainvoke(
-            [SystemMessage(content=system_message), HumanMessage(content=text)]
+            [SystemMessage(content=system_message), HumanMessage(content=text)],
         )
+        print(response.content)
         print("Stage 1 processing completed.")
-        json_part = clean_json_from_response(response.content)
-        json_data = json.loads(json_part)
+        json_data = json.loads(clean_json_from_response(response.content))
         return LlmStageOutput(**json_data)
     except Exception as e:
         print(f"Error in stage 1 processing: {str(e)}")
@@ -62,12 +62,13 @@ async def process_stage_two(stage_one_output: LlmStageOutput) -> LlmStageOutput:
         # Goal 
         Below is generated final report for my patient
         Your task is check if final report is correct up to important notes
+        Return JSON with fixed fields. If nothing to fix, return as it is. Do not write anything else.
         
         # Important notes 
-        {prompts_data['important_notes']}
+        {json.dumps(prompts_data['important_notes'])}
         
         # Output format
-        {LLM_TEXT_PROCESSOR_OUTPUT_FORMAT}
+        {json.dumps(LLM_TEXT_PROCESSOR_OUTPUT_FORMAT)}
         """
         response = await llm.ainvoke(
             [
@@ -75,6 +76,7 @@ async def process_stage_two(stage_one_output: LlmStageOutput) -> LlmStageOutput:
                 HumanMessage(content=stage_one_output.model_dump_json()),
             ]
         )
+        print(response.content)
         print("Stage 2 processing completed.")
 
         res = json.loads(clean_json_from_response(response.content))
@@ -85,35 +87,19 @@ async def process_stage_two(stage_one_output: LlmStageOutput) -> LlmStageOutput:
         raise
 
 
-async def process_after_stage(llm_res: LlmStageOutput) -> str:
-    """Takes llm output and returns html"""
-    try:
-        prompts_data = load_prompt_files()
-        final_html = prompts_data.get("output_example", "")
-        for key, value in llm_res.model_dump().items():
-            if key == "letter_to_patient":
-                value = [f"<p>{i}</p>" for i in value.split("\n")]
-            final_html = final_html.replace("{{" + key + "}}", str(value or ""))
-        return final_html
-    except Exception as e:
-        print(f"Error in process_after_stage: {str(e)} {traceback.format_exc()}")
-        raise
 
 
-async def process_single_text(
-    text: str,
-) -> tuple[LlmStageOutput, str]:
-    """Process a single text and return HTML with JSON data"""
+async def process_single_text(text: str) -> LlmStageOutput:
+    """Process a single text and return LlmStageOutput"""
     # Stage 1 & 2 processing
     stage_one_result = await process_stage_one(text)
     final_llm_res = await process_stage_two(stage_one_result)
-    html_text = await process_after_stage(final_llm_res)
 
-    return final_llm_res, html_text
+    return final_llm_res
 
 
-async def process_single_document(file_bytes: bytes, filename: str) -> str:
-    """Process a single document file and return HTML"""
+async def process_single_document(file_bytes: bytes, filename: str) -> LlmStageOutput:
+    """Process a single document file and return LlmStageOutput"""
     # Extract text content based on file type
     if filename.lower().endswith(".txt"):
         file_content = file_bytes.decode("utf-8")
@@ -125,19 +111,17 @@ async def process_single_document(file_bytes: bytes, filename: str) -> str:
     # Process the content
     stage_one_result = await process_stage_one(file_content)
     final_llm_res = await process_stage_two(stage_one_result)
-    html_text = await process_after_stage(final_llm_res)
 
-    return html_text
+    return final_llm_res
 
 
-async def process_single_audio(audio_bytes: bytes, filename: str) -> str:
-    """Process a single audio file and return HTML"""
+async def process_single_audio(audio_bytes: bytes, filename: str) -> LlmStageOutput:
+    """Process a single audio file and return LlmStageOutput"""
     # Transcribe audio
     transcribed_text = await transcribe_audio_with_openai(audio_bytes, filename)
 
     # Process the transcribed content
     stage_one_result = await process_stage_one(transcribed_text)
     final_llm_res = await process_stage_two(stage_one_result)
-    html_text = await process_after_stage(final_llm_res)
 
-    return html_text
+    return final_llm_res

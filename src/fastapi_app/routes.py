@@ -2,14 +2,18 @@ from fastapi import APIRouter, Form, File, UploadFile
 from fastapi.responses import JSONResponse
 import asyncio
 from typing import List
+import base64
+import os
+from docx import Document
 from src.fastapi_app.services import (
     process_single_text,
     process_single_document,
     process_single_audio,
 )
 from src.utils.utils import load_prompt_files
-import base64
 from src.fastapi_app.schemas import ProcessJsonRequest, UploadBase64Request
+from src.utils.schemas import LlmStageOutput
+from src.utils.local_docx_formatter import LocalDocxFormatter
 
 router = APIRouter(prefix="/api")
 
@@ -17,11 +21,10 @@ router = APIRouter(prefix="/api")
 @router.post("/process_text")
 async def process_text(text: str = Form(...)) -> JSONResponse:
     try:
-        dict_res, html_result = await process_single_text(text)
+        llm_result = await process_single_text(text)
         return JSONResponse(
             content={
-                "json_data": dict_res.model_dump(),
-                "html_result": html_result,
+                "json_data": llm_result.model_dump(),
             }
         )
 
@@ -63,7 +66,7 @@ async def process_documents(request: UploadBase64Request) -> JSONResponse:
         if valid_results:
             return JSONResponse(
                 content={
-                    "html_results": valid_results,
+                    "json_results": [result.model_dump() for result in valid_results],
                     "count": len(valid_results),
                 }
             )
@@ -103,7 +106,7 @@ async def process_audio(files: List[UploadFile] = File(...)) -> JSONResponse:
         if valid_results:
             return JSONResponse(
                 content={
-                    "html_results": valid_results,
+                    "json_results": [result.model_dump() for result in valid_results],
                     "count": len(valid_results),
                 }
             )
@@ -144,7 +147,7 @@ async def process_json(request: ProcessJsonRequest) -> JSONResponse:
 
         return JSONResponse(
             content={
-                "html_results": [final_html],
+                "json_results": [formatted_data],
                 "count": 1,
             }
         )
@@ -153,4 +156,54 @@ async def process_json(request: ProcessJsonRequest) -> JSONResponse:
         print(f"Error in process_json endpoint: {str(e)}")
         return JSONResponse(
             content={"error": "Failed to process JSON data"}, status_code=500
+        )
+
+
+@router.post("/download_docx")
+async def download_docx(data: LlmStageOutput) -> JSONResponse:
+    try:
+        # Load the default DOCX template
+        template_path = "files/default_docx_report.docx"
+        if not os.path.exists(template_path):
+            return JSONResponse(
+                content={"error": "DOCX template not found"}, status_code=500
+            )
+        
+        # Load template document
+        doc = Document(template_path)
+        
+        # Initialize formatter
+        formatter = LocalDocxFormatter()
+        
+        # Replace placeholders with values from LlmStageOutput
+        data_dict = data.model_dump()
+        for key, value in data_dict.items():
+            if value is not None:
+                placeholder = "{" + key + "}"
+                # Convert value to string, handle None values
+                str_value = str(value) if value is not None else ""
+                formatter.replace_all(doc, placeholder, str_value, html=True)
+        
+        # Save to temporary file and encode to base64
+        temp_path = "/tmp/filled_report.docx"
+        doc.save(temp_path)
+        
+        with open(temp_path, "rb") as file:
+            docx_content = file.read()
+            base64_content = base64.b64encode(docx_content).decode('utf-8')
+        
+        # Clean up temp file
+        os.remove(temp_path)
+        
+        return JSONResponse(
+            content={
+                "docx_base64": base64_content,
+                "filename": "medical_report.docx"
+            }
+        )
+        
+    except Exception as e:
+        print(f"Error in download_docx endpoint: {str(e)}")
+        return JSONResponse(
+            content={"error": "Failed to generate DOCX document"}, status_code=500
         )

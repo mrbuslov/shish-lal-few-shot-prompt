@@ -1,5 +1,4 @@
-// Global variable to store download URL
-let currentDownloadUrl = null;
+// Global variables
 let uploadedDocuments = [];
 let uploadedAudioFiles = [];
 
@@ -33,11 +32,6 @@ function hideResultAndLoading() {
     document.getElementById('result').classList.remove('show');
     document.getElementById('downloadInfo').style.display = 'none';
     document.getElementById('editableResults').classList.remove('show');
-    // Clean up the previous download URL
-    if (currentDownloadUrl) {
-        window.URL.revokeObjectURL(currentDownloadUrl);
-        currentDownloadUrl = null;
-    }
 }
 
 function showResult(content, title = "Processed Result:", isError = false) {
@@ -58,42 +52,21 @@ function showResult(content, title = "Processed Result:", isError = false) {
     document.getElementById('loading').classList.remove('show');
 }
 
-function showDownloadSuccess(downloadUrl, filename) {
-    // Store the download URL globally
-    currentDownloadUrl = downloadUrl;
-    
-    // Set up the download button
+function showDownloadSuccess(htmlResults) {
+    // Set up the download button to generate DOCX from HTML
     const downloadBtn = document.getElementById('downloadZipBtn');
     downloadBtn.onclick = function() {
-        const a = document.createElement('a');
-        a.href = currentDownloadUrl;
-        a.download = filename;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
+        if (htmlResults && htmlResults.length > 0) {
+            // Use the first HTML result to generate DOCX
+            convertHtmlToDocx(htmlResults[0]);
+        }
     };
     
+    downloadBtn.textContent = 'Download DOCX file!';
     document.getElementById('downloadInfo').style.display = 'block';
     document.getElementById('loading').classList.remove('show');
 }
 
-function showDownloadSuccessBase64(base64Data, filename, contentType) {
-    // Set up the download button with base64 data
-    const downloadBtn = document.getElementById('downloadZipBtn');
-    downloadBtn.onclick = function() {
-        downloadBase64File(base64Data, filename, contentType);
-    };
-    
-    // Update button text based on file type
-    if (contentType && contentType.includes('zip')) {
-        downloadBtn.textContent = 'Download ZIP file!';
-    } else {
-        downloadBtn.textContent = 'Download PDF file!';
-    }
-    
-    document.getElementById('downloadInfo').style.display = 'block';
-    document.getElementById('loading').classList.remove('show');
-}
 
 // File Management Functionality
 function renderDocumentFiles() {
@@ -206,17 +179,14 @@ document.getElementById('textForm').addEventListener('submit', async function(e)
         
         if (response.ok) {
             const responseData = await response.json();
+            console.log(responseData);
             
             if (responseData.error) {
                 throw new Error(responseData.error);
             }
             
-            // Show editable results form with JSON data and original file
-            showEditableResults(responseData.json_data, {
-                file_data: responseData.file_data,
-                filename: responseData.filename,
-                content_type: responseData.content_type
-            });
+            // Show editable results form with JSON data
+            showEditableResults(responseData.json_data);
         } else {
             throw new Error('Processing failed');
         }
@@ -317,8 +287,10 @@ async function handleDocumentFiles(files) {
             uploadedDocuments = [];
             renderDocumentFiles();
             
-            // Show download button with base64 data
-            showDownloadSuccessBase64(responseData.file_data, responseData.filename, responseData.content_type);
+            // Show editable results form with the first result
+            if (responseData.json_results && responseData.json_results.length > 0) {
+                showEditableResults(responseData.json_results[0]);
+            }
         } else {
             throw new Error('Processing failed');
         }
@@ -412,8 +384,10 @@ async function handleAudioFiles(files) {
             uploadedAudioFiles = [];
             renderAudioFiles();
             
-            // Show download button with base64 data
-            showDownloadSuccessBase64(responseData.file_data, responseData.filename, responseData.content_type);
+            // Show editable results form with the first result
+            if (responseData.json_results && responseData.json_results.length > 0) {
+                showEditableResults(responseData.json_results[0]);
+            }
         } else {
             throw new Error('Processing failed');
         }
@@ -458,12 +432,11 @@ function fileToBase64(file) {
 
 // Global variables to store current data
 let currentJsonData = null;
-let originalFileData = null;
+let originalHtmlResult = null;
 
 // Show editable results form with populated data
-function showEditableResults(jsonData, fileData = null) {
+function showEditableResults(jsonData) {
     currentJsonData = jsonData;
-    originalFileData = fileData;
     
     // Populate form fields
     document.getElementById('edit_recipients_info').value = jsonData.recipients_info || '';
@@ -471,123 +444,80 @@ function showEditableResults(jsonData, fileData = null) {
     document.getElementById('edit_next_review').value = jsonData.next_review || '';
     document.getElementById('edit_corrected_visual_acuity_right').value = jsonData.corrected_visual_acuity_right || '';
     document.getElementById('edit_corrected_visual_acuity_left').value = jsonData.corrected_visual_acuity_left || '';
-    
-    // Handle letter_to_patient - use the prepared text version
-    let letterText = jsonData.letter_to_patient_text || '';
-    if (!letterText && Array.isArray(jsonData.letter_to_patient)) {
-        letterText = jsonData.letter_to_patient.join('\n\n');
-    } else if (!letterText && typeof jsonData.letter_to_patient === 'string') {
-        // Remove HTML tags and convert to plain text
-        letterText = jsonData.letter_to_patient
-            .replace(/<p[^>]*>/g, '')
-            .replace(/<\/p>/g, '\n')
-            .replace(/<span[^>]*>/g, '')
-            .replace(/<\/span>/g, '')
-            .replace(/\n\s*\n/g, '\n\n')
-            .trim();
-    }
-    document.getElementById('edit_letter_to_patient').value = letterText;
-    
-    // Show/hide download original button
-    const downloadOriginalBtn = document.getElementById('downloadOriginalBtn');
-    if (originalFileData) {
-        downloadOriginalBtn.style.display = 'inline-block';
-        // Update button text based on file type
-        if (originalFileData.content_type && originalFileData.content_type.includes('zip')) {
-            downloadOriginalBtn.textContent = '📥 Download Original ZIP';
-        } else {
-            downloadOriginalBtn.textContent = '📥 Download Original PDF';
-        }
-        downloadOriginalBtn.onclick = function() {
-            downloadBase64File(originalFileData.file_data, originalFileData.filename, originalFileData.content_type);
-        };
-    } else {
-        downloadOriginalBtn.style.display = 'none';
-    }
+    document.getElementById('edit_letter_to_patient').value = jsonData.letter_to_patient || '';
     
     // Hide loading and show editable form
     document.getElementById('loading').classList.remove('show');
     document.getElementById('editableResults').classList.add('show');
 }
 
-// Function to download base64 file
-function downloadBase64File(base64Data, filename, contentType) {
-    try {
-        const byteCharacters = atob(base64Data);
-        const byteNumbers = new Array(byteCharacters.length);
-        for (let i = 0; i < byteCharacters.length; i++) {
-            byteNumbers[i] = byteCharacters.charCodeAt(i);
-        }
-        const byteArray = new Uint8Array(byteNumbers);
-        const blob = new Blob([byteArray], {type: contentType});
-        const url = window.URL.createObjectURL(blob);
-        
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = filename;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        window.URL.revokeObjectURL(url);
-    } catch (error) {
-        console.error('Error downloading file:', error);
-        alert('Error downloading file. Please try again.');
-    }
-}
 
-// Handle form submission for regenerating document
-document.getElementById('editableForm').addEventListener('submit', async function(e) {
-    e.preventDefault();
-    
-    const btn = document.getElementById('regenerateBtn');
+// Handle download DOCX button click
+document.getElementById('downloadDocxBtn').addEventListener('click', async function() {
+    const btn = this;
     const originalText = btn.textContent;
     
     btn.disabled = true;
-    btn.textContent = 'Generating...';
-    hideResultAndLoading();
-    showLoading("Regenerating document with updated fields...");
+    btn.textContent = 'Generating DOCX...';
     
     try {
-        // Collect form data
-        const formData = new FormData(this);
+        // Collect current form data
+        const formData = new FormData(document.getElementById('editableForm'));
         const updatedData = {
             recipients_info: formData.get('recipients_info'),
             diagnosis: formData.get('diagnosis'),
             next_review: formData.get('next_review'),
             corrected_visual_acuity_right: formData.get('corrected_visual_acuity_right'),
             corrected_visual_acuity_left: formData.get('corrected_visual_acuity_left'),
-            letter_to_patient: formData.get('letter_to_patient').split('\n\n') // Convert back to array
+            letter_to_patient: formData.get('letter_to_patient')
         };
         
-        // Send to process_json endpoint
-        const response = await fetch('/api/process_json', {
+        // Send to download_docx endpoint
+        const response = await fetch('/api/download_docx', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
             },
-            body: JSON.stringify({
-                document: updatedData
-            })
+            body: JSON.stringify(updatedData)
         });
         
         if (response.ok) {
-            const contentType = response.headers.get('content-type');
-            const blob = await response.blob();
-            const url = window.URL.createObjectURL(blob);
+            const responseData = await response.json();
             
-            // Determine filename based on content type
-            let filename = 'processed_document.pdf';
-            if (contentType && contentType.includes('zip')) {
-                filename = 'processed_documents.zip';
+            if (responseData.error) {
+                throw new Error(responseData.error);
             }
             
-            showDownloadSuccess(url, filename);
+            // Download the DOCX file
+            const base64Data = responseData.docx_base64;
+            const filename = responseData.filename || 'medical_report.docx';
+            
+            // Convert base64 to blob and download
+            const byteCharacters = atob(base64Data);
+            const byteNumbers = new Array(byteCharacters.length);
+            for (let i = 0; i < byteCharacters.length; i++) {
+                byteNumbers[i] = byteCharacters.charCodeAt(i);
+            }
+            const byteArray = new Uint8Array(byteNumbers);
+            const blob = new Blob([byteArray], { type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' });
+            
+            // Create download link
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.style.display = 'none';
+            a.href = url;
+            a.download = filename;
+            document.body.appendChild(a);
+            a.click();
+            window.URL.revokeObjectURL(url);
+            document.body.removeChild(a);
+            
         } else {
-            throw new Error('Document generation failed');
+            throw new Error('DOCX generation failed');
         }
         
     } catch (error) {
-        showResult('Error generating document: ' + error.message, 'Generation Error', true);
+        alert('Error generating DOCX: ' + error.message);
     } finally {
         btn.disabled = false;
         btn.textContent = originalText;
@@ -794,8 +724,10 @@ sendRecordBtn.addEventListener('click', async function() {
             // Reset recording UI after successful processing
             resetRecordingUI();
             
-            // Show download button with base64 data
-            showDownloadSuccessBase64(responseData.file_data, responseData.filename, responseData.content_type);
+            // Show editable results form with the first result
+            if (responseData.json_results && responseData.json_results.length > 0) {
+                showEditableResults(responseData.json_results[0]);
+            }
         } else {
             throw new Error('Processing failed');
         }

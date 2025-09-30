@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Medical Text Processor</title>
     <link rel="icon" type="image/x-icon" href="https://cdn.pixabay.com/photo/2021/03/18/07/42/icon-6104157_1280.png">
-
     <link rel="stylesheet" href="/static/styles.css">
 
 </head>
@@ -146,13 +145,14 @@
             <h3>📝 Review and Edit Generated Fields</h3>
             <p style="text-align: center; color: #7f8c8d; margin-bottom: 25px;">
                 Review the generated fields below. You can edit any field and regenerate the document.
+                <b>NOTE: If you see html tags like &lt;b&gt;, &lt;i&gt;, &lt;u&gt; etc., this is NOT an error, leave them as it is.</b>
             </p>
             
             <form id="editableForm">
                 <div class="form-grid">
                     <div class="form-field form-field-full">
                         <label for="edit_recipients_info">Recipients Info:</label>
-                        <input type="text" id="edit_recipients_info" name="recipients_info" placeholder="Enter recipients information">
+                        <textarea id="edit_recipients_info" name="recipients_info" placeholder="Enter recipients information"></textarea>
                     </div>
                     
                     <div class="form-field">
@@ -182,14 +182,12 @@
                 </div>
                 
                 <div class="form-actions">
-                    <button type="button" class="btn-download" id="downloadOriginalBtn" style="display: none;">📥 Download Original ZIP</button>
-                    <button type="submit" class="btn-regenerate" id="regenerateBtn">🔄 Generate New Document</button>
+                    <button type="button" class="btn-download" id="downloadDocxBtn">📥 Download DOCX</button>
                     <button type="button" class="btn-cancel" id="cancelEditBtn">❌ Cancel</button>
                 </div>
             </form>
         </div>
     </div>
 </body>
-<script src="/static/docx.js"></script>
 <script src="/static/script.js"></script>
 </html>

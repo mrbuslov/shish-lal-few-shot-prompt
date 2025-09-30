@@ -412,6 +412,7 @@ textarea:focus {
     box-shadow: 0 4px 15px rgba(39, 174, 96, 0.3);
     min-width: 200px;
     margin: 10px;
+    text-decoration: none;
 }
 
 .btn-download:hover {
@@ -680,6 +681,7 @@ textarea:focus {
     cursor: pointer;
     transition: all 0.3s ease;
     box-shadow: 0 4px 15px rgba(149, 165, 166, 0.3);
+    text-decoration: none;
 }
 
 .btn-cancel:hover {
