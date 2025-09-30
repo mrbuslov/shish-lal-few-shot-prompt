@@ -2,6 +2,7 @@ import json
 import os
 import traceback
 from langchain_core.messages import HumanMessage, SystemMessage
+from src.common.settings import settings
 from src.utils.schemas import LlmStageOutput
 
 from src.utils.utils import (
@@ -19,7 +20,7 @@ LLM_TEXT_PROCESSOR_OUTPUT_FORMAT = {
 
 llm = ChatAnthropic(
     model="claude-sonnet-4-20250514",
-    api_key=os.getenv("ANTHROPIC_API_KEY"),
+    api_key=settings.ANTHROPIC_API_KEY,
     max_tokens=64_000,
 )
 

@@ -1,3 +1,4 @@
+import os
 import subprocess
 from fastapi import FastAPI
 from fastapi.responses import HTMLResponse
@@ -5,12 +6,19 @@ from fastapi.staticfiles import StaticFiles
 import uvicorn
 from dotenv import load_dotenv
 from src.fastapi_app.routes import router as main_router
+from src.utils.consts import USER_REPORTS_FILES_DIR
 
-# Load environment variables from .env file
-load_dotenv()
+
+async def lifespan(app):
+    print("Server is starting...")
+    if not os.path.exists(USER_REPORTS_FILES_DIR):
+        os.makedirs(USER_REPORTS_FILES_DIR)
+    yield
+    print("Server is shutting down...")
 
 app = FastAPI(
-    title="Medical Text Processor", description="AI-powered medical text analysis"
+    title="Medical Text Processor", description="AI-powered medical text analysis",
+    lifespan=lifespan,
 )
 
 # Mount static files

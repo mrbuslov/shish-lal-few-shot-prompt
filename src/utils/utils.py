@@ -7,9 +7,11 @@ from docx import Document
 from openai import AsyncOpenAI
 from dotenv import load_dotenv
 
+from src.common.settings import settings
+
 load_dotenv()
 
-openai_client = AsyncOpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+openai_client = AsyncOpenAI(api_key=settings.OPENAI_API_KEY)
 
 
 def extract_text_from_docx(docx_bytes: bytes) -> str:

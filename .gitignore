@@ -216,4 +216,4 @@ __marimo__/
 # Streamlit
 .streamlit/secrets.toml
 
-conversion_temp/
+user_files/
