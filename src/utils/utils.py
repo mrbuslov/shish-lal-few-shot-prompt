@@ -30,14 +30,17 @@ def extract_text_from_docx(docx_bytes: bytes) -> str:
         raise
 
 
-def load_prompt_files() -> dict:
+async def load_prompt_files():
+    pass
+    
+    
+def load_default_prompt_files_data() -> dict:
     """Load all required prompt files"""
     base_path = "files/prompts_default"
     files = {
         "few_shot_prompt": f"{base_path}/few-shot-prompt.md",
         "examples": f"{base_path}/examples.json",
         "important_notes": f"{base_path}/important_notes.md",
-        "output_example": f"{base_path}/output_example.html",
         "words_spelling": f"{base_path}/words_spelling.json",
     }
 

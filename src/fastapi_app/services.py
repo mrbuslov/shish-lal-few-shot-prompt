@@ -51,9 +51,6 @@ async def process_stage_one(text: str) -> LlmStageOutput:
 async def process_stage_two(stage_one_output: LlmStageOutput) -> LlmStageOutput:
     try:
         prompts_data = load_prompt_files()
-        final_html = prompts_data.get("output_example", "")
-        for key, value in stage_one_output.model_dump().items():
-            final_html = final_html.replace("{{" + key + "}}", str(value))
 
         print("Starting stage 2 processing...")
         system_message = f"""

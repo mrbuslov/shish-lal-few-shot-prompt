@@ -123,42 +123,6 @@ async def process_audio(files: List[UploadFile] = File(...)) -> JSONResponse:
         )
 
 
-@router.post("/process_json")
-async def process_json(request: ProcessJsonRequest) -> JSONResponse:
-    try:
-        if not request.document:
-            return JSONResponse(
-                content={"error": "No documents provided"}, status_code=400
-            )
-
-        # Load the template HTML
-        prompts_data = load_prompt_files()
-        template_html = prompts_data.get("output_example", "")
-
-        if not template_html:
-            return JSONResponse(
-                content={"error": "Template not found"}, status_code=500
-            )
-
-        formatted_data = dict(request.document)
-        final_html = template_html
-        for key, value in formatted_data.items():
-            final_html = final_html.replace("{{" + key + "}}", str(value))
-
-        return JSONResponse(
-            content={
-                "json_results": [formatted_data],
-                "count": 1,
-            }
-        )
-
-    except Exception as e:
-        print(f"Error in process_json endpoint: {str(e)}")
-        return JSONResponse(
-            content={"error": "Failed to process JSON data"}, status_code=500
-        )
-
-
 @router.post("/download_docx")
 async def download_docx(data: LlmStageOutput) -> JSONResponse:
     try:
