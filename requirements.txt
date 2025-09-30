@@ -12,3 +12,7 @@ html2text
 pydantic_settings
 httpx[http2]
 python-docx
+motor==3.4.0
+beanie==1.25.0
+pymongo==4.6.2
+passlib[argon2]

@@ -30,8 +30,24 @@ def extract_text_from_docx(docx_bytes: bytes) -> str:
         raise
 
 
-async def load_prompt_files():
-    pass
+async def load_prompt_files(user_id: str) -> dict:
+    """Load prompt files data for a specific user from MongoDB"""
+    from src.common.models import ReportData
+    from src.common.db_facade import DatabaseFacade
+    
+    report_facade = DatabaseFacade(ReportData)
+    report_data = await report_facade.get_one(user_id=user_id)
+    
+    if not report_data:
+        # If no user-specific data found, return default data
+        return load_default_prompt_files_data()
+    
+    return {
+        "few_shot_prompt": report_data.few_shot_prompt,
+        "examples": report_data.examples,
+        "important_notes": report_data.important_notes,
+        "words_spelling": report_data.words_spelling,
+    }
     
     
 def load_default_prompt_files_data() -> dict:

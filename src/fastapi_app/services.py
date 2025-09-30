@@ -28,7 +28,21 @@ llm = ChatAnthropic(
 async def process_stage_one(text: str) -> LlmStageOutput:
     """First stage of processing - extract structured data"""
     try:
-        data = load_prompt_files()
+        # For now, use superadmin user or fallback to default data
+        try:
+            from src.common.models import User
+            from src.common.db_facade import DatabaseFacade
+            user_facade = DatabaseFacade(User)
+            superadmin = await user_facade.get_one(is_superuser=True)
+            if superadmin:
+                data = await load_prompt_files(str(superadmin.id))
+            else:
+                from src.utils.utils import load_default_prompt_files_data
+                data = load_default_prompt_files_data()
+        except Exception:
+            # Fallback to default data if MongoDB is not available
+            from src.utils.utils import load_default_prompt_files_data
+            data = load_default_prompt_files_data()
         system_message = data["few_shot_prompt"].format(
             words_spelling=data["words_spelling"],
             LLM_TEXT_PROCESSOR_OUTPUT_FORMAT=json.dumps(LLM_TEXT_PROCESSOR_OUTPUT_FORMAT),
@@ -50,7 +64,21 @@ async def process_stage_one(text: str) -> LlmStageOutput:
 
 async def process_stage_two(stage_one_output: LlmStageOutput) -> LlmStageOutput:
     try:
-        prompts_data = load_prompt_files()
+        # For now, use superadmin user or fallback to default data
+        try:
+            from src.common.models import User
+            from src.common.db_facade import DatabaseFacade
+            user_facade = DatabaseFacade(User)
+            superadmin = await user_facade.get_one(is_superuser=True)
+            if superadmin:
+                prompts_data = await load_prompt_files(str(superadmin.id))
+            else:
+                from src.utils.utils import load_default_prompt_files_data
+                prompts_data = load_default_prompt_files_data()
+        except Exception:
+            # Fallback to default data if MongoDB is not available
+            from src.utils.utils import load_default_prompt_files_data
+            prompts_data = load_default_prompt_files_data()
 
         print("Starting stage 2 processing...")
         system_message = f"""
