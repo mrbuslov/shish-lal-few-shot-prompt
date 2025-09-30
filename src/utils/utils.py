@@ -8,6 +8,8 @@ from openai import AsyncOpenAI
 from dotenv import load_dotenv
 
 from src.common.settings import settings
+from src.common.models import ReportData
+from src.common.db_facade import DatabaseFacade
 
 load_dotenv()
 
@@ -32,8 +34,6 @@ def extract_text_from_docx(docx_bytes: bytes) -> str:
 
 async def load_prompt_files(user_id: str) -> dict:
     """Load prompt files data for a specific user from MongoDB"""
-    from src.common.models import ReportData
-    from src.common.db_facade import DatabaseFacade
     
     report_facade = DatabaseFacade(ReportData)
     report_data = await report_facade.get_one(user_id=user_id)
@@ -42,11 +42,18 @@ async def load_prompt_files(user_id: str) -> dict:
         # If no user-specific data found, return default data
         return load_default_prompt_files_data()
     
+    # Check if report_file_url is None, load from local file
+    if report_data.report_file_url is None:
+        report_file_url = "files/default_docx_report.docx"
+    else:
+        report_file_url = report_data.report_file_url
+    
     return {
         "few_shot_prompt": report_data.few_shot_prompt,
         "examples": report_data.examples,
         "important_notes": report_data.important_notes,
         "words_spelling": report_data.words_spelling,
+        "report_file_url": report_file_url,
     }
     
     

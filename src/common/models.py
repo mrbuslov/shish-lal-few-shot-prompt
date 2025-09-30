@@ -27,6 +27,7 @@ class ReportData(Document):
     examples: str = Field(default="")
     important_notes: str = Field(default="")
     words_spelling: str = Field(default="")
+    report_file_url: Optional[str] = Field(default=None)
     created_at: datetime = Field(default_factory=datetime.utcnow)
     updated_at: datetime = Field(default_factory=datetime.utcnow)
 
