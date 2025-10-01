@@ -1,15 +1,39 @@
-name: Notify Local Server on Push
+name: Deploy to Production
 
 on:
   push:
     branches:
       - main
+  workflow_dispatch:
 
 jobs:
-  notify-local-server:
+  deploy:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Send GET request to FastAPI /update
+      - name: Deploy to production server
         run: |
-          curl -X GET https://profound-normally-crappie.ngrok-free.app/update
+          # Setup SSH
+          mkdir -p ~/.ssh
+          echo "${{ secrets.DEPLOY_PRIVATE_KEY }}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          ssh-keyscan -H ${{ secrets.DEPLOY_HOST }} >> ~/.ssh/known_hosts
+          
+          # Deploy
+          ssh -o StrictHostKeyChecking=no ${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }} << 'EOF'
+            cd ${{ secrets.DEPLOY_PATH }}
+            
+            echo "🚀 Deploying..."
+            git pull origin main
+            
+            mkdir -p docker/nginx/sites-enabled temp files/user_reports logs
+            
+            docker-compose -f docker-compose.prod.yml build
+            docker-compose -f docker-compose.prod.yml down
+            docker-compose -f docker-compose.prod.yml up -d
+            
+            # Clean up old unused images
+            docker image prune -af
+            
+            echo "✅ Deployment complete"
+          EOF
