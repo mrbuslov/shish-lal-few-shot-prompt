@@ -31,9 +31,9 @@ jobs:
             # Enable nginx site configuration
             ln -sf ../sites-available/drlal.com.au docker/nginx/sites-enabled/drlal.com.au
             
-            docker-compose -f docker-compose.prod.yml build
-            docker-compose -f docker-compose.prod.yml down
-            docker-compose -f docker-compose.prod.yml up -d
+            docker compose -f docker-compose.prod.yml build
+            docker compose -f docker-compose.prod.yml down
+            docker compose -f docker-compose.prod.yml up -d
             
             # Clean up old unused images
             docker image prune -af
