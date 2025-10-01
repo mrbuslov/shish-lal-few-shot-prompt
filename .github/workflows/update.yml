@@ -21,6 +21,7 @@ jobs:
           
           # Deploy
           ssh -o StrictHostKeyChecking=no ${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }} << 'EOF'
+            set -e  # Exit on any error
             cd ${{ secrets.DEPLOY_PATH }}
             
             echo "🚀 Deploying..."
