@@ -5,25 +5,26 @@ services:
     build:
       context: .
       dockerfile: docker/Dockerfile
-    container_name: medical-processor-app
-    restart: unless-stopped
-    environment:
-      - NODE_ENV=production
-      - PYTHONUNBUFFERED=1
+    ports:
+      - "8000:8000"
+    env_file:
+      - .env
+    depends_on:
+      mongodb:
+        condition: service_healthy
     volumes:
       - ./files:/app/files
       - ./temp:/app/temp
       - app_logs:/app/logs
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8000/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
     networks:
       - app-network
-    depends_on:
-      - mongodb
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 40s
 
   nginx:
     image: nginx:1.25-alpine
@@ -54,25 +55,30 @@ services:
   mongodb:
     image: mongo:7.0
     container_name: medical-processor-mongodb
-    restart: unless-stopped
+    ports:
+      - "27017:27017"
     environment:
-      MONGO_INITDB_ROOT_USERNAME: ${MONGO_USERNAME:-admin}
-      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_PASSWORD}
-      MONGO_INITDB_DATABASE: ${MONGO_DATABASE:-medical_processor}
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_INITDB_ROOT_USERNAME}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_INITDB_ROOT_PASSWORD}
+      MONGO_INITDB_DATABASE: ${MONGODB_DB_NAME}
+      MONGO_APP_USER: ${MONGO_APP_USER}
+      MONGO_APP_PASSWORD: ${MONGO_APP_PASSWORD}
+      MONGODB_DB_NAME: ${MONGODB_DB_NAME}
     volumes:
       - mongodb_data:/data/db
       - mongodb_config:/data/configdb
-      - ./mongodb/init-scripts:/docker-entrypoint-initdb.d:ro
+      - ./docker/mongo-init.sh:/docker-entrypoint-initdb.d/01-init.sh:ro
+    command: ["--auth"]
+    healthcheck:
+      test: |
+        mongosh --quiet --eval "db.adminCommand('ping')" || exit 1
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 40s
+    restart: unless-stopped
     networks:
       - app-network
-    ports:
-      - "27017:27017"
-    healthcheck:
-      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 40s
 
   certbot:
     image: certbot/certbot:latest
