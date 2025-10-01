@@ -6,9 +6,11 @@ CRITICAL: Extract and use ONLY information explicitly mentioned in the transcrip
 **HEADER EXTRACTION**
 - If transcript includes Patient Name or Main Recipient or Copy Recipients, you should fill the field "recipients_info" in this format (make sure to fill this format correctly with corresponding values). Otherwise leave it blank, do not add underscore!
 Format:
-Patient Name: [patient name]
-To: [main recipient]
-cc: [copy recipients]
+```
+<b>Patient Name: [patient name]</b><br>
+<b>To: [main recipient]</b><br>
+<b>cc: [copy recipients]</b><br>
+```
 
 
 **CONTENT EXTRACTION - Mandatory Sections (Always Include)**

@@ -1,0 +1,419 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Profile - Medical Text Processor</title>
+    <link rel="icon" type="image/x-icon" href="https://cdn.pixabay.com/photo/2021/03/18/07/42/icon-6104157_1280.png">
+    <link rel="stylesheet" href="/static/styles.css">
+    <style>
+        .profile-container {
+            width: 100%;
+            margin: 50px auto;
+            padding: 30px;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        .profile-container textarea {
+            border-radius: 1rem;
+            height: 15rem;
+        }
+        .profile-header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid #ecf0f1;
+        }
+        .profile-header h1 {
+            color: #2c3e50;
+            margin-bottom: 10px;
+        }
+        .profile-nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+        }
+        .nav-links a {
+            color: #3498db;
+            text-decoration: none;
+            margin: 0 10px;
+            padding: 8px 16px;
+            border-radius: 5px;
+            transition: background 0.3s;
+        }
+        .nav-links a:hover {
+            background: #ecf0f1;
+        }
+        .logout-btn {
+            background: #e74c3c !important;
+            color: white !important;
+        }
+        .logout-btn:hover {
+            background: #c0392b !important;
+        }
+        .section {
+            margin-bottom: 40px;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            background: #fafafa;
+        }
+        .section h3 {
+            color: #2c3e50;
+            margin-bottom: 20px;
+            border-bottom: 2px solid #3498db;
+            padding-bottom: 10px;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            color: #34495e;
+            font-weight: 500;
+        }
+        .form-group input,
+        .form-group textarea {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 14px;
+            box-sizing: border-box;
+            font-family: inherit;
+        }
+        .form-group textarea {
+            resize: vertical;
+            min-height: 100px;
+        }
+        .form-group input:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: #3498db;
+            box-shadow: 0 0 5px rgba(52, 152, 219, 0.3);
+        }
+        .btn {
+            background: #3498db;
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background 0.3s;
+        }
+        .btn:hover {
+            background: #2980b9;
+        }
+        .btn-success {
+            background: #27ae60;
+        }
+        .btn-success:hover {
+            background: #219653;
+        }
+        .file-upload-section {
+            border: 2px dashed #ddd;
+            padding: 20px;
+            text-align: center;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            transition: border-color 0.3s;
+        }
+        .file-upload-section:hover {
+            border-color: #3498db;
+        }
+        .file-upload-section.dragover {
+            border-color: #3498db;
+            background: #f8f9fa;
+        }
+        .file-info {
+            background: #e8f5e8;
+            padding: 10px;
+            border-radius: 5px;
+            margin-top: 10px;
+            display: none;
+        }
+        .current-file {
+            background: #fff3cd;
+            padding: 10px;
+            border-radius: 5px;
+            margin-bottom: 10px;
+        }
+        .message {
+            padding: 10px;
+            border-radius: 5px;
+            margin: 10px 0;
+            display: none;
+        }
+        .success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+    </style>
+</head>
+<body>
+    <div class="profile-container">
+        <div class="profile-header">
+            <h1>👤 My Profile</h1>
+            <p>Manage your report settings and upload files</p>
+        </div>
+        
+        <div class="profile-nav">
+            <div class="nav-links">
+                <a href="/">🏠 Home</a>
+            </div>
+            <div class="nav-links">
+                <a href="#" class="logout-btn" onclick="logout()">🚪 Logout</a>
+            </div>
+        </div>
+
+        <!-- Report Data Section -->
+        <div class="section">
+            <h3>📝 Report Data Settings</h3>
+            <form id="reportDataForm">
+                <div class="form-group">
+                    <label for="few_shot_prompt">Few Shot Prompt:</label>
+                    <textarea id="few_shot_prompt" name="few_shot_prompt" placeholder="Enter your few shot prompt here..."></textarea>
+                </div>
+                
+                <div class="form-group">
+                    <label for="examples">Examples:</label>
+                    <textarea id="examples" name="examples" placeholder="Enter examples here..."></textarea>
+                </div>
+                
+                <div class="form-group">
+                    <label for="important_notes">Important Notes:</label>
+                    <textarea id="important_notes" name="important_notes" placeholder="Enter important notes here..."></textarea>
+                </div>
+                
+                <div class="form-group">
+                    <label for="words_spelling">Words Spelling:</label>
+                    <textarea id="words_spelling" name="words_spelling" placeholder="Enter words spelling guide here..."></textarea>
+                </div>
+                
+                <button type="submit" class="btn btn-success">💾 Save Report Settings</button>
+            </form>
+        </div>
+
+        <!-- File Upload Section -->
+        <div class="section">
+            <h3>📁 Report File Upload</h3>
+            <div id="currentFile" class="current-file" style="display: none;">
+                <strong>Current file:</strong> <span id="currentFileName">None</span>
+                <button type="button" class="btn" style="float: right;" onclick="deleteCurrentFile()">🗑️ Delete</button>
+            </div>
+            
+            <div class="file-upload-section" id="fileUploadArea">
+                <div class="upload-icon" style="font-size: 48px;">📄</div>
+                <h4>Upload Report File</h4>
+                <p>Click to browse or drag and drop your file here</p>
+                <p><small>Supported formats: All file types</small></p>
+                <input type="file" id="fileInput" style="display: none;">
+                <button type="button" class="btn" onclick="document.getElementById('fileInput').click()">Browse Files</button>
+            </div>
+            
+            <div class="file-info" id="fileInfo">
+                <strong>Selected file:</strong> <span id="fileName"></span><br>
+                <strong>Size:</strong> <span id="fileSize"></span>
+                <button type="button" class="btn btn-success" onclick="uploadFile()">📤 Upload File</button>
+            </div>
+        </div>
+
+        <div class="message success" id="successMessage"></div>
+        <div class="message error" id="errorMessage"></div>
+    </div>
+
+    <script>
+        let reportData = {};
+        let selectedFile = null;
+
+        // Load user data and report data on page load
+        window.addEventListener('load', async function() {
+            await loadReportData();
+            await loadCurrentFile();
+        });
+
+        async function loadReportData() {
+            try {
+                const response = await fetch('/api/report-data');
+                if (response.ok) {
+                    reportData = await response.json();
+                    
+                    // Populate form with existing data
+                    document.getElementById('few_shot_prompt').value = reportData.few_shot_prompt || '';
+                    document.getElementById('examples').value = reportData.examples || '';
+                    document.getElementById('important_notes').value = reportData.important_notes || '';
+                    document.getElementById('words_spelling').value = reportData.words_spelling || '';
+                }
+            } catch (error) {
+                console.error('Error loading report data:', error);
+            }
+        }
+
+        async function loadCurrentFile() {
+            try {
+                const response = await fetch('/api/report-data');
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.report_file_url) {
+                        document.getElementById('currentFileName').textContent = data.report_file_url.split('/').pop();
+                        document.getElementById('currentFile').style.display = 'block';
+                    }
+                }
+            } catch (error) {
+                console.error('Error loading current file:', error);
+            }
+        }
+
+        // Report data form submission
+        document.getElementById('reportDataForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const formData = new FormData(e.target);
+            const data = Object.fromEntries(formData.entries());
+            
+            try {
+                const response = await fetch('/api/report-data', {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(data)
+                });
+                
+                if (response.ok) {
+                    showMessage('Report settings saved successfully!', 'success');
+                } else {
+                    const error = await response.json();
+                    showMessage(error.detail || 'Error saving report settings', 'error');
+                }
+            } catch (error) {
+                showMessage('Connection error. Please try again.', 'error');
+            }
+        });
+
+        // File upload handling
+        const fileInput = document.getElementById('fileInput');
+        const fileUploadArea = document.getElementById('fileUploadArea');
+        const fileInfo = document.getElementById('fileInfo');
+
+        fileInput.addEventListener('change', function(e) {
+            handleFileSelect(e.target.files[0]);
+        });
+
+        // Drag and drop functionality
+        fileUploadArea.addEventListener('dragover', function(e) {
+            e.preventDefault();
+            fileUploadArea.classList.add('dragover');
+        });
+
+        fileUploadArea.addEventListener('dragleave', function(e) {
+            e.preventDefault();
+            fileUploadArea.classList.remove('dragover');
+        });
+
+        fileUploadArea.addEventListener('drop', function(e) {
+            e.preventDefault();
+            fileUploadArea.classList.remove('dragover');
+            handleFileSelect(e.dataTransfer.files[0]);
+        });
+
+        function handleFileSelect(file) {
+            if (file) {
+                selectedFile = file;
+                document.getElementById('fileName').textContent = file.name;
+                document.getElementById('fileSize').textContent = (file.size / 1024 / 1024).toFixed(2) + ' MB';
+                fileInfo.style.display = 'block';
+            }
+        }
+
+        async function uploadFile() {
+            if (!selectedFile) return;
+
+            const formData = new FormData();
+            formData.append('file', selectedFile);
+
+            try {
+                const response = await fetch('/api/upload-report-file', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (response.ok) {
+                    showMessage('File uploaded successfully!', 'success');
+                    fileInfo.style.display = 'none';
+                    selectedFile = null;
+                    fileInput.value = '';
+                    await loadCurrentFile(); // Reload current file info
+                } else {
+                    const error = await response.json();
+                    showMessage(error.detail || 'Error uploading file', 'error');
+                }
+            } catch (error) {
+                showMessage('Connection error. Please try again.', 'error');
+            }
+        }
+
+        async function deleteCurrentFile() {
+            if (confirm('Are you sure you want to delete the current file?')) {
+                try {
+                    const response = await fetch('/api/delete-report-file', {
+                        method: 'DELETE'
+                    });
+
+                    if (response.ok) {
+                        showMessage('File deleted successfully!', 'success');
+                        document.getElementById('currentFile').style.display = 'none';
+                    } else {
+                        const error = await response.json();
+                        showMessage(error.detail || 'Error deleting file', 'error');
+                    }
+                } catch (error) {
+                    showMessage('Connection error. Please try again.', 'error');
+                }
+            }
+        }
+
+        function showMessage(message, type) {
+            const successMsg = document.getElementById('successMessage');
+            const errorMsg = document.getElementById('errorMessage');
+            
+            // Hide both messages first
+            successMsg.style.display = 'none';
+            errorMsg.style.display = 'none';
+            
+            if (type === 'success') {
+                successMsg.textContent = message;
+                successMsg.style.display = 'block';
+            } else {
+                errorMsg.textContent = message;
+                errorMsg.style.display = 'block';
+            }
+            
+            // Auto-hide after 5 seconds
+            setTimeout(() => {
+                successMsg.style.display = 'none';
+                errorMsg.style.display = 'none';
+            }, 5000);
+        }
+
+        async function logout() {
+            try {
+                await fetch('/auth/logout', { method: 'POST' });
+                window.location.href = '/login';
+            } catch (error) {
+                window.location.href = '/login';
+            }
+        }
+    </script>
+</body>
+</html>

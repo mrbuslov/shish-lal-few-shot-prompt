@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Access - Medical Text Processor</title>
+    <link rel="icon" type="image/x-icon" href="https://cdn.pixabay.com/photo/2021/03/18/07/42/icon-6104157_1280.png">
+    <link rel="stylesheet" href="/static/styles.css">
+    <style>
+        .auth-container {
+            max-width: 400px;
+            margin: 100px auto;
+            padding: 30px;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        .auth-header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .auth-header h1 {
+            color: #e74c3c;
+            margin-bottom: 10px;
+        }
+        .auth-header p {
+            color: #7f8c8d;
+        }
+        .auth-form .form-group {
+            margin-bottom: 20px;
+        }
+        .auth-form label {
+            display: block;
+            margin-bottom: 5px;
+            color: #34495e;
+            font-weight: 500;
+        }
+        .auth-form input[type="email"],
+        .auth-form input[type="password"],
+        .auth-form input[type="text"] {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 16px;
+            box-sizing: border-box;
+        }
+        .auth-form input:focus {
+            outline: none;
+            border-color: #e74c3c;
+            box-shadow: 0 0 5px rgba(231, 76, 60, 0.3);
+        }
+        .btn-auth {
+            width: 100%;
+            padding: 12px;
+            background: #e74c3c;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+        .btn-auth:hover {
+            background: #c0392b;
+        }
+        .auth-links {
+            text-align: center;
+            margin-top: 20px;
+        }
+        .auth-links a {
+            color: #3498db;
+            text-decoration: none;
+            margin: 0 10px;
+        }
+        .auth-links a:hover {
+            text-decoration: underline;
+        }
+        .error-message {
+            color: #e74c3c;
+            text-align: center;
+            margin-top: 10px;
+            display: none;
+        }
+        .success-message {
+            color: #27ae60;
+            text-align: center;
+            margin-top: 10px;
+            display: none;
+        }
+        .admin-warning {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            color: #856404;
+            padding: 10px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        .users-container {
+            display: none;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 30px;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        .users-header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .users-header h1 {
+            color: #e74c3c;
+            margin-bottom: 10px;
+        }
+        .users-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        .users-table th,
+        .users-table td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+        .users-table th {
+            background-color: #f8f9fa;
+            font-weight: 600;
+            color: #34495e;
+        }
+        .users-table tr:hover {
+            background-color: #f5f5f5;
+        }
+        .status-badge {
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+        .status-active {
+            background-color: #d4edda;
+            color: #155724;
+        }
+        .status-inactive {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+        .admin-badge {
+            background-color: #e1ecf4;
+            color: #0c5460;
+        }
+        .user-badge {
+            background-color: #fff3cd;
+            color: #856404;
+        }
+        .logout-btn {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            padding: 8px 16px;
+            background: #6c757d;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            text-decoration: none;
+        }
+        .logout-btn:hover {
+            background: #5a6268;
+        }
+    </style>
+</head>
+<body>
+    <a href="/login" class="logout-btn">Back to Login</a>
+    
+    <!-- Admin Authentication Form -->
+    <div class="auth-container" id="authContainer">
+        <div class="auth-header">
+            <h1>🔐 Admin Access</h1>
+            <p>Administrator Authentication Required</p>
+        </div>
+        
+        <div class="admin-warning">
+            ⚠️ Admin credentials are required to access this area
+        </div>
+        
+        <form class="auth-form" id="adminForm">
+            <div class="form-group">
+                <label for="email">Admin Email:</label>
+                <input type="email" id="email" name="email" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="password">Admin Password:</label>
+                <input type="password" id="password" name="password" required>
+            </div>
+            
+            <button type="submit" class="btn-auth">Access Admin Panel</button>
+        </form>
+        
+        <div class="error-message" id="errorMessage"></div>
+        <div class="success-message" id="successMessage"></div>
+        
+        <div class="auth-links">
+            <a href="/login">Back to Login</a>
+        </div>
+    </div>
+
+    <!-- Users List (shown after successful authentication) -->
+    <div class="users-container" id="usersContainer">
+        <div class="users-header">
+            <h1>👥 User Management</h1>
+            <p>System Users Overview</p>
+        </div>
+        
+        <div id="usersLoading" style="text-align: center; display: none;">
+            Loading users...
+        </div>
+        
+        <table class="users-table" id="usersTable" style="display: none;">
+            <thead>
+                <tr>
+                    <th>Email</th>
+                    <th>Full Name</th>
+                    <th>Status</th>
+                    <th>Role</th>
+                    <th>Created</th>
+                </tr>
+            </thead>
+            <tbody id="usersTableBody">
+            </tbody>
+        </table>
+        
+        <div class="error-message" id="usersErrorMessage"></div>
+    </div>
+
+    <script>
+        let adminAuthenticated = false;
+        let adminCredentials = {};
+        
+        document.getElementById('adminForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const errorMessage = document.getElementById('errorMessage');
+            const successMessage = document.getElementById('successMessage');
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            
+            errorMessage.style.display = 'none';
+            successMessage.style.display = 'none';
+            
+            try {
+                const response = await fetch('/auth/admin-login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                    },
+                    body: new URLSearchParams({
+                        email: email,
+                        password: password
+                    })
+                });
+                
+                const result = await response.json();
+                
+                if (response.ok) {
+                    adminAuthenticated = true;
+                    adminCredentials = { email, password };
+                    
+                    successMessage.textContent = result.message || 'Admin authenticated successfully!';
+                    successMessage.style.display = 'block';
+                    
+                    // Hide auth form and show users list
+                    setTimeout(() => {
+                        document.getElementById('authContainer').style.display = 'none';
+                        document.getElementById('usersContainer').style.display = 'block';
+                        loadUsers();
+                    }, 1500);
+                } else {
+                    errorMessage.textContent = result.detail || 'Invalid admin credentials';
+                    errorMessage.style.display = 'block';
+                }
+            } catch (error) {
+                errorMessage.textContent = 'Connection error. Please try again.';
+                errorMessage.style.display = 'block';
+            }
+        });
+        
+        async function loadUsers() {
+            const usersLoading = document.getElementById('usersLoading');
+            const usersTable = document.getElementById('usersTable');
+            const usersErrorMessage = document.getElementById('usersErrorMessage');
+            const usersTableBody = document.getElementById('usersTableBody');
+            
+            usersLoading.style.display = 'block';
+            usersTable.style.display = 'none';
+            usersErrorMessage.style.display = 'none';
+            
+            try {
+                const response = await fetch('/api/admin/users', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                    },
+                    body: new URLSearchParams({
+                        email: adminCredentials.email,
+                        password: adminCredentials.password
+                    })
+                });
+                
+                const result = await response.json();
+                
+                if (response.ok) {
+                    usersTableBody.innerHTML = '';
+                    
+                    result.users.forEach(user => {
+                        const row = document.createElement('tr');
+                        
+                        const statusClass = user.is_active ? 'status-active' : 'status-inactive';
+                        const statusText = user.is_active ? 'Active' : 'Inactive';
+                        
+                        const roleClass = user.is_superuser ? 'admin-badge' : 'user-badge';
+                        const roleText = user.is_superuser ? 'Admin' : 'User';
+                        
+                        const createdDate = new Date(user.created_at).toLocaleDateString();
+                        
+                        row.innerHTML = `
+                            <td>${user.email}</td>
+                            <td>${user.full_name || 'N/A'}</td>
+                            <td><span class="status-badge ${statusClass}">${statusText}</span></td>
+                            <td><span class="status-badge ${roleClass}">${roleText}</span></td>
+                            <td>${createdDate}</td>
+                        `;
+                        
+                        usersTableBody.appendChild(row);
+                    });
+                    
+                    usersLoading.style.display = 'none';
+                    usersTable.style.display = 'table';
+                } else {
+                    usersLoading.style.display = 'none';
+                    usersErrorMessage.textContent = result.detail || 'Failed to load users';
+                    usersErrorMessage.style.display = 'block';
+                }
+            } catch (error) {
+                usersLoading.style.display = 'none';
+                usersErrorMessage.textContent = 'Connection error. Please try again.';
+                usersErrorMessage.style.display = 'block';
+            }
+        }
+    </script>
+</body>
+</html>

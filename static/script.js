@@ -31,7 +31,7 @@ function hideResultAndLoading() {
     document.getElementById('loading').classList.remove('show');
     document.getElementById('result').classList.remove('show');
     document.getElementById('downloadInfo').style.display = 'none';
-    document.getElementById('editableResults').classList.remove('show');
+    document.getElementById('multipleResultsContainer').classList.remove('show');
 }
 
 function showResult(content, title = "Processed Result:", isError = false) {
@@ -287,9 +287,9 @@ async function handleDocumentFiles(files) {
             uploadedDocuments = [];
             renderDocumentFiles();
             
-            // Show editable results form with the first result
+            // Show editable results form for all results
             if (responseData.json_results && responseData.json_results.length > 0) {
-                showEditableResults(responseData.json_results[0]);
+                showMultipleEditableResults(responseData.json_results);
             }
         } else {
             throw new Error('Processing failed');
@@ -384,9 +384,9 @@ async function handleAudioFiles(files) {
             uploadedAudioFiles = [];
             renderAudioFiles();
             
-            // Show editable results form with the first result
+            // Show editable results form for all results
             if (responseData.json_results && responseData.json_results.length > 0) {
-                showEditableResults(responseData.json_results[0]);
+                showMultipleEditableResults(responseData.json_results);
             }
         } else {
             throw new Error('Processing failed');
@@ -431,38 +431,120 @@ function fileToBase64(file) {
 }
 
 // Global variables to store current data
-let currentJsonData = null;
+let currentJsonDataArray = [];
 let originalHtmlResult = null;
 
-// Show editable results form with populated data
+// Show editable results form with populated data (single result for text processing)
 function showEditableResults(jsonData) {
-    currentJsonData = jsonData;
+    showMultipleEditableResults([jsonData]);
+}
+
+// Show multiple editable results forms
+function showMultipleEditableResults(jsonDataArray) {
+    currentJsonDataArray = jsonDataArray;
     
-    // Populate form fields
-    document.getElementById('edit_recipients_info').value = jsonData.recipients_info || '';
-    document.getElementById('edit_diagnosis').value = jsonData.diagnosis || '';
-    document.getElementById('edit_next_review').value = jsonData.next_review || '';
-    document.getElementById('edit_corrected_visual_acuity_right').value = jsonData.corrected_visual_acuity_right || '';
-    document.getElementById('edit_corrected_visual_acuity_left').value = jsonData.corrected_visual_acuity_left || '';
-    document.getElementById('edit_letter_to_patient').value = jsonData.letter_to_patient || '';
+    const container = document.getElementById('dynamicResultsForms');
+    const multipleActions = document.getElementById('multipleActions');
     
-    // Hide loading and show editable form
+    // Clear previous forms
+    container.innerHTML = '';
+    
+    // Create form for each result
+    jsonDataArray.forEach((jsonData, index) => {
+        const formHtml = createEditableForm(jsonData, index);
+        container.innerHTML += formHtml;
+    });
+    
+    // Show multiple actions if more than one result
+    if (jsonDataArray.length > 1) {
+        multipleActions.style.display = 'block';
+        document.querySelector('.results-header').display = 'block';
+    } else {
+        multipleActions.style.display = 'none';
+    }
+    
+    // Hide loading and show editable forms
     document.getElementById('loading').classList.remove('show');
-    document.getElementById('editableResults').classList.add('show');
+    document.getElementById('multipleResultsContainer').classList.add('show');
+    
+    // Attach event listeners for individual download buttons
+    attachDownloadButtonListeners();
+}
+
+// Create HTML for a single editable form
+function createEditableForm(jsonData, index) {
+    const filename = jsonData.source_filename || `File ${index + 1}`;
+    const sourceType = jsonData.source_type || 'file';
+    
+    return `
+        <div class="single-result-form" data-index="${index}">
+            <div class="file-header">
+                <h4>${sourceType === 'audio' ? '🎵' : '📄'} ${filename}</h4>
+            </div>
+            
+            <form class="editable-form" data-index="${index}">
+                <div class="form-grid">
+                    <div class="form-field form-field-full">
+                        <label for="edit_recipients_info_${index}">Recipients Info:</label>
+                        <textarea id="edit_recipients_info_${index}" name="recipients_info" placeholder="Enter recipients information">${jsonData.recipients_info || ''}</textarea>
+                    </div>
+                    
+                    <div class="form-field">
+                        <label for="edit_diagnosis_${index}">Diagnosis:</label>
+                        <input type="text" id="edit_diagnosis_${index}" name="diagnosis" placeholder="Enter diagnosis" value="${jsonData.diagnosis || ''}">
+                    </div>
+                    
+                    <div class="form-field">
+                        <label for="edit_next_review_${index}">Next Review:</label>
+                        <input type="text" id="edit_next_review_${index}" name="next_review" placeholder="Next review date" value="${jsonData.next_review || ''}">
+                    </div>
+                    
+                    <div class="form-field">
+                        <label for="edit_corrected_visual_acuity_right_${index}">Visual Acuity Right:</label>
+                        <input type="text" id="edit_corrected_visual_acuity_right_${index}" name="corrected_visual_acuity_right" placeholder="Right eye visual acuity" value="${jsonData.corrected_visual_acuity_right || ''}">
+                    </div>
+                    
+                    <div class="form-field">
+                        <label for="edit_corrected_visual_acuity_left_${index}">Visual Acuity Left:</label>
+                        <input type="text" id="edit_corrected_visual_acuity_left_${index}" name="corrected_visual_acuity_left" placeholder="Left eye visual acuity" value="${jsonData.corrected_visual_acuity_left || ''}">
+                    </div>
+                    
+                    <div class="form-field form-field-full">
+                        <label for="edit_letter_to_patient_${index}">Letter to Patient:</label>
+                        <textarea id="edit_letter_to_patient_${index}" name="letter_to_patient" placeholder="Enter the letter content for the patient..." rows="8">${jsonData.letter_to_patient || ''}</textarea>
+                    </div>
+                </div>
+                
+                <div class="form-actions">
+                    <button type="button" class="btn-download individual-download-btn" data-index="${index}">📥 Download DOCX</button>
+                </div>
+            </form>
+        </div>
+    `;
 }
 
 
-// Handle download DOCX button click
-document.getElementById('downloadDocxBtn').addEventListener('click', async function() {
-    const btn = this;
-    const originalText = btn.textContent;
+// Attach event listeners for individual download buttons
+function attachDownloadButtonListeners() {
+    document.querySelectorAll('.individual-download-btn').forEach(btn => {
+        btn.addEventListener('click', async function() {
+            const index = parseInt(this.dataset.index);
+            await downloadSingleDocx(index, this);
+        });
+    });
+}
+
+// Download single DOCX for a specific form
+async function downloadSingleDocx(index, btnElement) {
+    const originalText = btnElement.textContent;
     
-    btn.disabled = true;
-    btn.textContent = 'Generating DOCX...';
+    btnElement.disabled = true;
+    btnElement.textContent = 'Generating DOCX...';
     
     try {
-        // Collect current form data
-        const formData = new FormData(document.getElementById('editableForm'));
+        // Collect form data for this specific form
+        const form = document.querySelector(`form.editable-form[data-index="${index}"]`);
+        const formData = new FormData(form);
         const updatedData = {
             recipients_info: formData.get('recipients_info'),
             diagnosis: formData.get('diagnosis'),
@@ -490,27 +572,10 @@ document.getElementById('downloadDocxBtn').addEventListener('click', async funct
             
             // Download the DOCX file
             const base64Data = responseData.docx_base64;
-            const filename = responseData.filename || 'medical_report.docx';
+            const sourceFilename = currentJsonDataArray[index].source_filename || `result_${index + 1}`;
+            const filename = `${sourceFilename.split('.')[0]}_report.docx`;
             
-            // Convert base64 to blob and download
-            const byteCharacters = atob(base64Data);
-            const byteNumbers = new Array(byteCharacters.length);
-            for (let i = 0; i < byteCharacters.length; i++) {
-                byteNumbers[i] = byteCharacters.charCodeAt(i);
-            }
-            const byteArray = new Uint8Array(byteNumbers);
-            const blob = new Blob([byteArray], { type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' });
-            
-            // Create download link
-            const url = window.URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.style.display = 'none';
-            a.href = url;
-            a.download = filename;
-            document.body.appendChild(a);
-            a.click();
-            window.URL.revokeObjectURL(url);
-            document.body.removeChild(a);
+            downloadBase64AsDocx(base64Data, filename);
             
         } else {
             throw new Error('DOCX generation failed');
@@ -519,13 +584,100 @@ document.getElementById('downloadDocxBtn').addEventListener('click', async funct
     } catch (error) {
         alert('Error generating DOCX: ' + error.message);
     } finally {
+        btnElement.disabled = false;
+        btnElement.textContent = originalText;
+    }
+}
+
+// Helper function to download base64 as DOCX
+function downloadBase64AsDocx(base64Data, filename) {
+    // Convert base64 to blob and download
+    const byteCharacters = atob(base64Data);
+    const byteNumbers = new Array(byteCharacters.length);
+    for (let i = 0; i < byteCharacters.length; i++) {
+        byteNumbers[i] = byteCharacters.charCodeAt(i);
+    }
+    const byteArray = new Uint8Array(byteNumbers);
+    const blob = new Blob([byteArray], { type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' });
+    
+    // Create download link
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.style.display = 'none';
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    window.URL.revokeObjectURL(url);
+    document.body.removeChild(a);
+}
+
+// Handle download all DOCX button click
+document.getElementById('downloadAllDocxBtn').addEventListener('click', async function() {
+    const btn = this;
+    const originalText = btn.textContent;
+    
+    btn.disabled = true;
+    btn.textContent = 'Generating All DOCX...';
+    
+    try {
+        const downloadPromises = [];
+        
+        // Download each form's DOCX
+        for (let i = 0; i < currentJsonDataArray.length; i++) {
+            const form = document.querySelector(`form.editable-form[data-index="${i}"]`);
+            const formData = new FormData(form);
+            const updatedData = {
+                recipients_info: formData.get('recipients_info'),
+                diagnosis: formData.get('diagnosis'),
+                next_review: formData.get('next_review'),
+                corrected_visual_acuity_right: formData.get('corrected_visual_acuity_right'),
+                corrected_visual_acuity_left: formData.get('corrected_visual_acuity_left'),
+                letter_to_patient: formData.get('letter_to_patient')
+            };
+            
+            const downloadPromise = fetch('/api/download_docx', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(updatedData)
+            }).then(response => {
+                if (response.ok) {
+                    return response.json().then(data => {
+                        if (data.error) throw new Error(data.error);
+                        const sourceFilename = currentJsonDataArray[i].source_filename || `result_${i + 1}`;
+                        const filename = `${sourceFilename.split('.')[0]}_report.docx`;
+                        return { base64: data.docx_base64, filename };
+                    });
+                } else {
+                    throw new Error(`Failed to generate DOCX for ${currentJsonDataArray[i].source_filename}`);
+                }
+            });
+            
+            downloadPromises.push(downloadPromise);
+        }
+        
+        // Wait for all DOCX files to be generated
+        const results = await Promise.all(downloadPromises);
+        
+        // Download each file
+        results.forEach(result => {
+            setTimeout(() => {
+                downloadBase64AsDocx(result.base64, result.filename);
+            }, 100); // Small delay between downloads
+        });
+        
+    } catch (error) {
+        alert('Error generating DOCX files: ' + error.message);
+    } finally {
         btn.disabled = false;
         btn.textContent = originalText;
     }
 });
 
-// Handle cancel button
-document.getElementById('cancelEditBtn').addEventListener('click', function() {
+// Handle cancel all button
+document.getElementById('cancelAllEditBtn').addEventListener('click', function() {
     hideResultAndLoading();
 });
 
@@ -724,9 +876,9 @@ sendRecordBtn.addEventListener('click', async function() {
             // Reset recording UI after successful processing
             resetRecordingUI();
             
-            // Show editable results form with the first result
+            // Show editable results form for all results
             if (responseData.json_results && responseData.json_results.length > 0) {
-                showEditableResults(responseData.json_results[0]);
+                showMultipleEditableResults(responseData.json_results);
             }
         } else {
             throw new Error('Processing failed');

@@ -1,11 +1,13 @@
 import os
 import tempfile
 import time
+import asyncio
 from io import BytesIO
 
 from docx import Document
 from openai import AsyncOpenAI
 from dotenv import load_dotenv
+from pydub import AudioSegment
 
 from src.common.settings import settings
 from src.common.models import ReportData
@@ -58,7 +60,17 @@ async def load_prompt_files(user_id: str) -> dict:
     
     
 def load_default_prompt_files_data() -> dict:
-    """Load all required prompt files"""
+    """Load all required prompt files with fallback defaults"""
+    # Default fallback data in case files can't be loaded
+    default_data = {
+        "few_shot_prompt": "Default few shot prompt",
+        "examples": "[]",
+        "important_notes": "Default important notes",
+        "words_spelling": "{}",
+        "report_file_url": "files/default_docx_report.docx"
+    }
+    
+    # Try to load from files
     base_path = "files/prompts_default"
     files = {
         "few_shot_prompt": f"{base_path}/few-shot-prompt.md",
@@ -67,17 +79,31 @@ def load_default_prompt_files_data() -> dict:
         "words_spelling": f"{base_path}/words_spelling.json",
     }
 
-    data = {}
+    data = default_data.copy()  # Start with defaults
+    
     for key, file_path in files.items():
         try:
-            with open(file_path, "r", encoding="utf-8") as f:
-                if file_path.endswith(".json"):
-                    data[key] = f.read()  # Keep as string for now
-                else:
-                    data[key] = f.read()
-        except FileNotFoundError:
-            print(f"Warning: {file_path} not found")
-            data[key] = ""
+            # Check if file exists first
+            if not os.path.exists(file_path):
+                print(f"Warning: {file_path} not found, using default")
+                continue
+                
+            # Try different encodings
+            content = ""
+            for encoding in ['utf-8', 'utf-8-sig', 'latin1', 'cp1252']:
+                try:
+                    with open(file_path, "r", encoding=encoding) as f:
+                        content = f.read()
+                    data[key] = content  # Update with file content
+                    break  # If successful, break out of encoding loop
+                except UnicodeDecodeError:
+                    continue
+            
+            if not content:  # If we couldn't read with any encoding
+                print(f"Warning: Could not decode {file_path}, using default")
+                
+        except Exception as e:
+            print(f"Warning: Could not load {file_path}: {str(e)}, using default")
 
     return data
 
@@ -88,18 +114,35 @@ def clean_json_from_response(response: str) -> str:
 
 
 async def transcribe_audio_with_openai(audio_bytes: bytes, filename: str) -> str:
-    """Transcribe audio using OpenAI's Whisper API"""
+    """Transcribe audio using OpenAI's Whisper API with 10-minute chunking"""
     try:
         # Create temporary file
         file_ext = os.path.splitext(filename)[1] if filename else ".mp3"
         temp_file_path = create_temp_audio_file(audio_bytes, file_ext)
 
         try:
-            # Transcribe using OpenAI API
-            transcription = await transcribe_with_file(temp_file_path)
-            return transcription
+            # Split audio into 10-minute chunks
+            chunk_paths = split_audio_into_chunks(temp_file_path, chunk_length_minutes=10)
+            
+            if not chunk_paths:
+                # If no chunks created (audio too short), transcribe directly
+                transcription = await transcribe_with_file(temp_file_path)
+                return transcription
+            
+            # Transcribe all chunks in parallel using asyncio.gather
+            transcription_tasks = [transcribe_with_file(chunk_path) for chunk_path in chunk_paths]
+            transcriptions = await asyncio.gather(*transcription_tasks)
+            
+            # Clean up chunk files
+            for chunk_path in chunk_paths:
+                cleanup_temp_file(chunk_path)
+            
+            # Join all transcriptions
+            full_transcription = " ".join(transcriptions)
+            return full_transcription
+            
         finally:
-            # Clean up temporary file
+            # Clean up main temporary file
             cleanup_temp_file(temp_file_path)
 
     except Exception as e:
@@ -107,11 +150,56 @@ async def transcribe_audio_with_openai(audio_bytes: bytes, filename: str) -> str
         raise
 
 
-def create_temp_audio_file(audio_bytes: bytes, file_ext: str) -> str:
-    """Create a temporary audio file and return its path"""
+def split_audio_into_chunks(audio_file_path: str, chunk_length_minutes: int = 10) -> list:
+    """Split audio file into chunks of specified length in minutes"""
     try:
-        # Create temp file with proper extension
-        with tempfile.NamedTemporaryFile(delete=False, suffix=file_ext) as temp_file:
+        # Load audio file
+        audio = AudioSegment.from_file(audio_file_path)
+        
+        # Convert minutes to milliseconds
+        chunk_length_ms = chunk_length_minutes * 60 * 1000
+        
+        # If audio is shorter than chunk length, return empty list (will use original file)
+        if len(audio) <= chunk_length_ms:
+            return []
+        
+        chunk_paths = []
+        total_chunks = len(audio) // chunk_length_ms + (1 if len(audio) % chunk_length_ms > 0 else 0)
+        
+        print(f"Splitting audio into {total_chunks} chunks of {chunk_length_minutes} minutes each")
+        
+        # Create temp directory if it doesn't exist
+        temp_dir = "temp"
+        os.makedirs(temp_dir, exist_ok=True)
+        
+        for i in range(0, len(audio), chunk_length_ms):
+            chunk = audio[i:i + chunk_length_ms]
+            
+            # Create temporary file for chunk in temp directory
+            chunk_file_ext = os.path.splitext(audio_file_path)[1]
+            with tempfile.NamedTemporaryFile(delete=False, suffix=chunk_file_ext, dir=temp_dir) as chunk_file:
+                chunk_path = chunk_file.name
+                
+            # Export chunk to file
+            chunk.export(chunk_path, format=chunk_file_ext[1:])  # Remove the dot from extension
+            chunk_paths.append(chunk_path)
+        
+        return chunk_paths
+        
+    except Exception as e:
+        print(f"Error splitting audio into chunks: {str(e)}")
+        raise
+
+
+def create_temp_audio_file(audio_bytes: bytes, file_ext: str) -> str:
+    """Create a temporary audio file in temp directory and return its path"""
+    try:
+        # Create temp directory if it doesn't exist
+        temp_dir = "temp"
+        os.makedirs(temp_dir, exist_ok=True)
+        
+        # Create temp file with proper extension in temp directory
+        with tempfile.NamedTemporaryFile(delete=False, suffix=file_ext, dir=temp_dir) as temp_file:
             temp_file.write(audio_bytes)
             return temp_file.name
     except Exception as e:

@@ -6,9 +6,55 @@
     <title>Medical Text Processor</title>
     <link rel="icon" type="image/x-icon" href="https://cdn.pixabay.com/photo/2021/03/18/07/42/icon-6104157_1280.png">
     <link rel="stylesheet" href="/static/styles.css">
+    <style>
+        .top-nav {
+            position: fixed;
+            top: 0;
+            right: 0;
+            padding: 15px 20px;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-bottom-left-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            z-index: 1000;
+        }
+        .nav-btn {
+            background: #3498db;
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            margin-left: 8px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            text-decoration: none;
+            display: inline-block;
+            transition: background 0.3s;
+        }
+        .nav-btn:hover {
+            background: #2980b9;
+            color: white;
+            text-decoration: none;
+        }
+        .nav-btn.logout {
+            background: #e74c3c;
+        }
+        .nav-btn.logout:hover {
+            background: #c0392b;
+        }
+        .container {
+            padding-top: 80px; /* Add padding to avoid overlap with fixed nav */
+        }
+    </style>
 
 </head>
 <body>
+    <!-- Top Navigation -->
+    <div class="top-nav">
+        <a href="/me" class="nav-btn">👤 My Profile</a>
+        <button class="nav-btn logout" onclick="logout()">🚪 Logout</button>
+    </div>
+    
     <div class="container">
         <h1>Medical Text Processor</h1>
         <p class="subtitle">AI-powered analysis of medical conversations</p>
@@ -140,54 +186,36 @@
             <button class="btn-download" id="downloadZipBtn">File is ready! Download it!</button>
         </div>
 
-        <!-- Editable Results Form -->
-        <div class="editable-results" id="editableResults">
-            <h3>📝 Review and Edit Generated Fields</h3>
-            <p style="text-align: center; color: #7f8c8d; margin-bottom: 25px;">
-                Review the generated fields below. You can edit any field and regenerate the document.
-                <b>NOTE: If you see html tags like &lt;b&gt;, &lt;i&gt;, &lt;u&gt; etc., this is NOT an error, leave them as it is.</b>
-            </p>
+        <!-- Multiple Editable Results Container -->
+        <div class="multiple-results-container" id="multipleResultsContainer">
+            <div class="results-header"  style="display: none;">
+                <h3>📝 Review and Edit Generated Fields</h3>
+                <p style="text-align: center; color: #7f8c8d; margin-bottom: 25px;">
+                    Review the generated fields below. You can edit any field and regenerate the documents.
+                    <b>NOTE: If you see html tags like &lt;b&gt;, &lt;i&gt;, &lt;u&gt; etc., this is NOT an error, leave them as it is.</b>
+                </p>
+            </div>
             
-            <form id="editableForm">
-                <div class="form-grid">
-                    <div class="form-field form-field-full">
-                        <label for="edit_recipients_info">Recipients Info:</label>
-                        <textarea id="edit_recipients_info" name="recipients_info" placeholder="Enter recipients information"></textarea>
-                    </div>
-                    
-                    <div class="form-field">
-                        <label for="edit_diagnosis">Diagnosis:</label>
-                        <input type="text" id="edit_diagnosis" name="diagnosis" placeholder="Enter diagnosis">
-                    </div>
-                    
-                    <div class="form-field">
-                        <label for="edit_next_review">Next Review:</label>
-                        <input type="text" id="edit_next_review" name="next_review" placeholder="Next review date">
-                    </div>
-                    
-                    <div class="form-field">
-                        <label for="edit_corrected_visual_acuity_right">Visual Acuity Right:</label>
-                        <input type="text" id="edit_corrected_visual_acuity_right" name="corrected_visual_acuity_right" placeholder="Right eye visual acuity">
-                    </div>
-                    
-                    <div class="form-field">
-                        <label for="edit_corrected_visual_acuity_left">Visual Acuity Left:</label>
-                        <input type="text" id="edit_corrected_visual_acuity_left" name="corrected_visual_acuity_left" placeholder="Left eye visual acuity">
-                    </div>
-                    
-                    <div class="form-field form-field-full">
-                        <label for="edit_letter_to_patient">Letter to Patient:</label>
-                        <textarea id="edit_letter_to_patient" name="letter_to_patient" placeholder="Enter the letter content for the patient..." rows="8"></textarea>
-                    </div>
-                </div>
-                
-                <div class="form-actions">
-                    <button type="button" class="btn-download" id="downloadDocxBtn">📥 Download DOCX</button>
-                    <button type="button" class="btn-cancel" id="cancelEditBtn">❌ Cancel</button>
-                </div>
-            </form>
+            <!-- Multiple results will be inserted here dynamically -->
+            <div id="dynamicResultsForms"></div>
+            
+            <!-- Actions for multiple files -->
+            <div class="multiple-actions" id="multipleActions" style="display: none;">
+                <button type="button" class="btn-download" id="downloadAllDocxBtn">📥 Download All DOCX Files</button>
+                <button type="button" class="btn-cancel" id="cancelAllEditBtn">❌ Cancel</button>
+            </div>
         </div>
     </div>
 </body>
 <script src="/static/script.js"></script>
+<script>
+    async function logout() {
+        try {
+            await fetch('/auth/logout', { method: 'POST' });
+            window.location.href = '/login';
+        } catch (error) {
+            window.location.href = '/login';
+        }
+    }
+</script>
 </html>

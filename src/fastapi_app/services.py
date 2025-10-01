@@ -28,20 +28,36 @@ llm = ChatAnthropic(
 )
 
 
-async def process_stage_one(text: str) -> LlmStageOutput:
+async def process_stage_one(text: str, user_id: str = None) -> LlmStageOutput:
     """First stage of processing - extract structured data"""
     try:
-        # For now, use superadmin user or fallback to default data
-        try:
-            user_facade = DatabaseFacade(User)
-            superadmin = await user_facade.get_one(is_superuser=True)
-            if superadmin:
-                data = await load_prompt_files(str(superadmin.id))
-            else:
+        # Try to use specific user's data if user_id provided
+        if user_id:
+            try:
+                data = await load_prompt_files(user_id)
+            except Exception:
+                # If user-specific data fails, fallback to superadmin or default
+                try:
+                    user_facade = DatabaseFacade(User)
+                    superadmin = await user_facade.get_one(is_superuser=True)
+                    if superadmin:
+                        data = await load_prompt_files(str(superadmin.id))
+                    else:
+                        data = load_default_prompt_files_data()
+                except Exception:
+                    data = load_default_prompt_files_data()
+        else:
+            # Fallback behavior when no user_id provided
+            try:
+                user_facade = DatabaseFacade(User)
+                superadmin = await user_facade.get_one(is_superuser=True)
+                if superadmin:
+                    data = await load_prompt_files(str(superadmin.id))
+                else:
+                    data = load_default_prompt_files_data()
+            except Exception:
+                # Fallback to default data if MongoDB is not available
                 data = load_default_prompt_files_data()
-        except Exception:
-            # Fallback to default data if MongoDB is not available
-            data = load_default_prompt_files_data()
         system_message = data["few_shot_prompt"].format(
             words_spelling=data["words_spelling"],
             LLM_TEXT_PROCESSOR_OUTPUT_FORMAT=json.dumps(LLM_TEXT_PROCESSOR_OUTPUT_FORMAT),
@@ -61,19 +77,35 @@ async def process_stage_one(text: str) -> LlmStageOutput:
         raise
 
 
-async def process_stage_two(stage_one_output: LlmStageOutput) -> LlmStageOutput:
+async def process_stage_two(stage_one_output: LlmStageOutput, user_id: str = None) -> LlmStageOutput:
     try:
-        # For now, use superadmin user or fallback to default data
-        try:
-            user_facade = DatabaseFacade(User)
-            superadmin = await user_facade.get_one(is_superuser=True)
-            if superadmin:
-                prompts_data = await load_prompt_files(str(superadmin.id))
-            else:
+        # Try to use specific user's data if user_id provided
+        if user_id:
+            try:
+                prompts_data = await load_prompt_files(user_id)
+            except Exception:
+                # If user-specific data fails, fallback to superadmin or default
+                try:
+                    user_facade = DatabaseFacade(User)
+                    superadmin = await user_facade.get_one(is_superuser=True)
+                    if superadmin:
+                        prompts_data = await load_prompt_files(str(superadmin.id))
+                    else:
+                        prompts_data = load_default_prompt_files_data()
+                except Exception:
+                    prompts_data = load_default_prompt_files_data()
+        else:
+            # Fallback behavior when no user_id provided
+            try:
+                user_facade = DatabaseFacade(User)
+                superadmin = await user_facade.get_one(is_superuser=True)
+                if superadmin:
+                    prompts_data = await load_prompt_files(str(superadmin.id))
+                else:
+                    prompts_data = load_default_prompt_files_data()
+            except Exception:
+                # Fallback to default data if MongoDB is not available
                 prompts_data = load_default_prompt_files_data()
-        except Exception:
-            # Fallback to default data if MongoDB is not available
-            prompts_data = load_default_prompt_files_data()
 
         print("Starting stage 2 processing...")
         system_message = f"""
@@ -110,16 +142,16 @@ async def process_stage_two(stage_one_output: LlmStageOutput) -> LlmStageOutput:
 
 
 
-async def process_single_text(text: str) -> LlmStageOutput:
+async def process_single_text(text: str, user_id: str = None) -> LlmStageOutput:
     """Process a single text and return LlmStageOutput"""
     # Stage 1 & 2 processing
-    stage_one_result = await process_stage_one(text)
-    final_llm_res = await process_stage_two(stage_one_result)
+    stage_one_result = await process_stage_one(text, user_id)
+    final_llm_res = await process_stage_two(stage_one_result, user_id)
 
     return final_llm_res
 
 
-async def process_single_document(file_bytes: bytes, filename: str) -> LlmStageOutput:
+async def process_single_document(file_bytes: bytes, filename: str, user_id: str = None) -> LlmStageOutput:
     """Process a single document file and return LlmStageOutput"""
     # Extract text content based on file type
     if filename.lower().endswith(".txt"):
@@ -130,19 +162,20 @@ async def process_single_document(file_bytes: bytes, filename: str) -> LlmStageO
         raise ValueError(f"Unsupported file type: {filename}")
 
     # Process the content
-    stage_one_result = await process_stage_one(file_content)
-    final_llm_res = await process_stage_two(stage_one_result)
+    stage_one_result = await process_stage_one(file_content, user_id)
+    final_llm_res = await process_stage_two(stage_one_result, user_id)
 
     return final_llm_res
 
 
-async def process_single_audio(audio_bytes: bytes, filename: str) -> LlmStageOutput:
+async def process_single_audio(audio_bytes: bytes, filename: str, user_id: str = None) -> LlmStageOutput:
     """Process a single audio file and return LlmStageOutput"""
     # Transcribe audio
     transcribed_text = await transcribe_audio_with_openai(audio_bytes, filename)
+    print(f"Transcribed text: {transcribed_text}")
 
     # Process the transcribed content
-    stage_one_result = await process_stage_one(transcribed_text)
-    final_llm_res = await process_stage_two(stage_one_result)
+    stage_one_result = await process_stage_one(transcribed_text, user_id)
+    final_llm_res = await process_stage_two(stage_one_result, user_id)
 
     return final_llm_res
