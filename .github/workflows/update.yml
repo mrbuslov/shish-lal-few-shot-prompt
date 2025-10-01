@@ -28,6 +28,9 @@ jobs:
             
             mkdir -p docker/nginx/sites-enabled temp files/user_reports logs
             
+            # Enable nginx site configuration
+            ln -sf ../sites-available/drlal.com.au docker/nginx/sites-enabled/drlal.com.au
+            
             docker-compose -f docker-compose.prod.yml build
             docker-compose -f docker-compose.prod.yml down
             docker-compose -f docker-compose.prod.yml up -d

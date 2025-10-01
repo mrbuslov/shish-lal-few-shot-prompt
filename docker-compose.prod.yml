@@ -40,6 +40,7 @@ services:
       - /var/lib/letsencrypt:/var/lib/letsencrypt:ro
       - nginx_logs:/var/log/nginx
       - ./static:/var/www/static:ro
+      - certbot_webroot:/var/www/certbot:ro
     networks:
       - app-network
     depends_on:
@@ -79,7 +80,7 @@ services:
     volumes:
       - /etc/letsencrypt:/etc/letsencrypt
       - /var/lib/letsencrypt:/var/lib/letsencrypt
-      - ./certbot/www:/var/www/certbot
+      - certbot_webroot:/var/www/certbot
     command: certbot --version
     profiles:
       - certbot
@@ -92,6 +93,8 @@ volumes:
   nginx_logs:
     driver: local
   app_logs:
+    driver: local
+  certbot_webroot:
     driver: local
 
 networks:
