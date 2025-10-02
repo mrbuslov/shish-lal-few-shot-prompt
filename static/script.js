@@ -755,7 +755,9 @@ startRecordBtn.addEventListener('click', async function() {
         };
         
         mediaRecorder.onstop = function() {
-            const audioBlob = new Blob(audioChunks, { type: 'audio/mp3' });
+            // Use the same MIME type that was used for recording
+            const mimeType = mediaRecorder.mimeType || 'audio/webm';
+            const audioBlob = new Blob(audioChunks, { type: mimeType });
             const audioUrl = URL.createObjectURL(audioBlob);
             audioPlayback.src = audioUrl;
             audioPreview.style.display = 'block';
