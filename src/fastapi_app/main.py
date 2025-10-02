@@ -1,5 +1,7 @@
 import os
 import subprocess
+import hashlib
+import time
 from contextlib import asynccontextmanager
 from fastapi import FastAPI, Request, HTTPException
 from fastapi.responses import HTMLResponse, RedirectResponse
@@ -25,6 +27,9 @@ pwd_context = CryptContext(
     schemes=["argon2", "bcrypt"],
     deprecated="auto"
 )
+
+# Generate cache-busting hash for static files
+STATIC_VERSION = hashlib.md5(str(time.time()).encode()).hexdigest()[:8]
 
 
 @asynccontextmanager
@@ -101,9 +106,10 @@ async def home(request: Request):
         try:
             current_user = await get_current_user(request)
             # User is authenticated, serve the main page
-            with open("templates/index.html", "r", encoding="utf-8") as f:
-                html_content = f.read()
-            return HTMLResponse(content=html_content)
+            return templates.TemplateResponse("index.html", {
+                "request": request,
+                "static_version": STATIC_VERSION
+            })
         except HTTPException:
             # User is not authenticated, redirect to login
             return RedirectResponse(url="/login", status_code=302)

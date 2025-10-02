@@ -3,9 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Permissions-Policy" content="microphone=*">
     <title>Medical Text Processor</title>
     <link rel="icon" type="image/x-icon" href="https://cdn.pixabay.com/photo/2021/03/18/07/42/icon-6104157_1280.png">
-    <link rel="stylesheet" href="/static/styles.css">
+    <link rel="stylesheet" href="/static/styles.css?v={{ static_version }}">
     <style>
         .top-nav {
             position: fixed;
@@ -207,7 +208,7 @@
         </div>
     </div>
 </body>
-<script src="/static/script.js"></script>
+<script src="/static/script.js?v={{ static_version }}"></script>
 <script>
     async function logout() {
         try {
