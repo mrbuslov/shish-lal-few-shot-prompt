@@ -20,21 +20,23 @@ jobs:
           ssh-keyscan -H ${{ secrets.DEPLOY_HOST }} >> ~/.ssh/known_hosts
           
           # Deploy
-          ssh -o StrictHostKeyChecking=no ${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }} << 'EOF'
+          ssh -o StrictHostKeyChecking=no ${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }} << EOF
             set -e  # Exit on any error
-            cd ${{ secrets.DEPLOY_PATH }}
+            set -x  # Print commands for debugging
+            
+            cd ${{ secrets.DEPLOY_PATH }} || { echo "❌ Failed to cd to ${{ secrets.DEPLOY_PATH }}"; exit 1; }
             
             echo "🚀 Deploying..."
-            git pull origin main
+            git pull origin main || { echo "❌ Git pull failed"; exit 1; }
             
             mkdir -p docker/nginx/sites-enabled temp files/user_reports logs
             
             # Enable nginx site configuration
             ln -sf ../sites-available/drlal.com.au docker/nginx/sites-enabled/drlal.com.au
             
-            docker compose -f docker-compose.prod.yml build
+            docker compose -f docker-compose.prod.yml build || { echo "❌ Docker build failed"; exit 1; }
             docker compose -f docker-compose.prod.yml down
-            docker compose -f docker-compose.prod.yml up -d
+            docker compose -f docker-compose.prod.yml up -d || { echo "❌ Docker up failed"; exit 1; }
             
             # Clean up old unused images
             docker image prune -af
