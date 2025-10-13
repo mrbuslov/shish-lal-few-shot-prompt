@@ -953,6 +953,13 @@ textarea:focus {
     box-shadow: none;
 }
 
+.unavailable {
+    opacity: 0.5;
+    cursor: not-allowed;
+    pointer-events: none;
+    user-select: none;
+}
+
 /* Responsive design for multiple results */
 @media (max-width: 768px) {
     .single-result-form {
@@ -978,3 +985,4 @@ textarea:focus {
         max-width: 300px;
     }
 }
+
