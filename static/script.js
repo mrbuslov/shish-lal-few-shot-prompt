@@ -491,7 +491,7 @@ function createEditableForm(jsonData, index) {
                     
                     <div class="form-field">
                         <label for="edit_diagnosis_${index}">Diagnosis:</label>
-                        <input type="text" id="edit_diagnosis_${index}" name="diagnosis" placeholder="Enter diagnosis" value="${jsonData.diagnosis || ''}">
+                        <textarea id="edit_diagnosis_${index}" name="diagnosis" placeholder="Enter diagnosis" class="diagnosis-textarea">${jsonData.diagnosis || ''}</textarea>
                     </div>
                     
                     <div class="form-field">

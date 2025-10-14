@@ -110,7 +110,8 @@ def load_default_prompt_files_data() -> dict:
 
 def clean_json_from_response(response: str) -> str:
     """Clean JSON from AI response by removing markdown and extra text"""
-    return response.replace("```json", "").replace("```", "").strip()
+    res = response.split("```json")[1] if "```json" in response else response
+    return res.rstrip("```").strip()
 
 
 async def transcribe_audio_with_openai(audio_bytes: bytes, filename: str) -> str:

@@ -964,6 +964,26 @@ textarea:focus {
     min-height: 100px !important;
 }
 
+.diagnosis-textarea {
+    min-height: 3rem;
+    max-height: 3rem;
+    padding: 12px;
+    border: 1px solid #e0e6ed;
+    border-radius: 8px;
+    font-size: 14px;
+    transition: all 0.3s ease;
+    background: white;
+    resize: vertical;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    line-height: 1.4;
+}
+
+.diagnosis-textarea:focus {
+    outline: none;
+    border-color: #667eea;
+    box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.1);
+}
+
 /* Responsive design for multiple results */
 @media (max-width: 768px) {
     .single-result-form {
