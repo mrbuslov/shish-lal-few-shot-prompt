@@ -94,12 +94,15 @@ async def get_current_user(request: Request) -> User:
     return user
 
 
-async def get_current_admin_user(email: str, password: str) -> bool:
-    """Verify admin credentials against environment variables"""
-    return (
-        email == settings.AUTH_SUPERADMIN_EMAIL
-        and password == settings.AUTH_SUPERADMIN_PASSWORD
-    )
+async def get_current_admin_user(email: str, password: str) -> Optional[User]:
+    """Verify admin credentials and return admin user if valid"""
+    if email != settings.AUTH_SUPERADMIN_EMAIL or password != settings.AUTH_SUPERADMIN_PASSWORD:
+        return None
+    
+    # Return the actual admin user from database
+    user_facade = DatabaseFacade(User)
+    admin_user = await user_facade.get_one(email=email)
+    return admin_user
 
 
 @router.post("/login")
@@ -178,7 +181,8 @@ async def signup(
 @router.post("/admin-login")
 async def admin_login(email: str = Form(...), password: str = Form(...)):
     """Admin login endpoint"""
-    if not await get_current_admin_user(email, password):
+    admin = await get_current_admin_user(email, password)
+    if not admin:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid admin credentials"
         )

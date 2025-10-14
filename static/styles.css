@@ -960,6 +960,10 @@ textarea:focus {
     user-select: none;
 }
 
+.recipients_info_textarea {
+    min-height: 100px !important;
+}
+
 /* Responsive design for multiple results */
 @media (max-width: 768px) {
     .single-result-form {

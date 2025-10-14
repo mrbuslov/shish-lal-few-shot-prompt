@@ -486,7 +486,7 @@ function createEditableForm(jsonData, index) {
                 <div class="form-grid">
                     <div class="form-field form-field-full">
                         <label for="edit_recipients_info_${index}">Recipients Info:</label>
-                        <textarea id="edit_recipients_info_${index}" name="recipients_info" placeholder="Enter recipients information">${jsonData.recipients_info || ''}</textarea>
+                        <textarea id="edit_recipients_info_${index}" name="recipients_info" placeholder="Enter recipients information" class='recipients_info_textarea'>${jsonData.recipients_info || ''}</textarea>
                     </div>
                     
                     <div class="form-field">
@@ -495,7 +495,7 @@ function createEditableForm(jsonData, index) {
                     </div>
                     
                     <div class="form-field">
-                        <label for="edit_next_review_${index}">Next Review:</label>
+                        <label for="edit_next_review_${index}">Plan:</label>
                         <input type="text" id="edit_next_review_${index}" name="next_review" placeholder="Next review date" value="${jsonData.next_review || ''}">
                     </div>
                     

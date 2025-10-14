@@ -11,16 +11,21 @@ Format:
 <b>To: [main recipient]</b><br>
 <b>cc: [copy recipients]</b><br>
 ```
+If "File number" is mentioned in the recording or text, it should appear like this after the patient name in the HTML output:
+```
+<b>Patient Name: [patient name] #[file number]</b><br>
+```
 
 
 **CONTENT EXTRACTION - Mandatory Sections (Always Include)**
 1.  **Diagnosis**: Clinical assessment and conditions (1 underscore if not mentioned)
 - If "additional diagnosis" is stated anywhere in transcript, add what follows immediately afterwards to the Diagnosis section
 2.  **Visual Acuity**: Extract exactly as stated, preserve all qualifiers ("corrected", "unaided", "correcting to") - separate lines for right/left eyes (1 underscore if not mentioned)
-3.  **Plan**: Treatment plan, follow-up, next review (1 underscore if not mentioned)
-- This is where we will add, for example “Booked for bilateral cataract surgery”. If there is a next review mentioned, this should be in plan as "Next review _ months" (replace _ with actual months)
+3.  **Plan**:
+- If I say that the patient is being booked for a procedure (eg, booked for bilateral cataract surgery), you MUST generate this in plan: "Booked for bilateral cataract surgery"
+- If I say next review 6 weeks, you MUST generate this in plan: "Next review 6 weeks"
 - Do not repeat which eye will be operated on first - that should appear only once in the body of the letter
-- If a procedure is mentioned, phrase it as "Booked for [procedure]"
+- Note: this is very important for you to generate this field right, so please be careful. If procedure is more important than review, so you should write it. Otherwise write next review. If nothing is specified, leave "_". You MUST write only valid value based on provided text, do not come up with random value
 
 
 **MEDICAL TERMINOLOGY STANDARDS**

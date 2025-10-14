@@ -8,7 +8,7 @@
     <link rel="stylesheet" href="/static/styles.css?v={{ static_version }}">
     <style>
         .history-container {
-            max-width: 1200px;
+            width: 60rem;
             margin: 0 auto;
             padding: 20px;
             background: #fff;
@@ -367,11 +367,13 @@
                     minute: '2-digit'
                 });
                 
+                const patient_name = (item.patient_name || 'N/A').split('<br>')[0];
+                const diagnosis = (item.diagnosis || 'N/A').replaceAll("<br>", '. ');
                 div.innerHTML = `
                     <div class="item-header">
                         <div class="item-info">
-                            <div class="patient-name">${item.patient_name || 'N/A'}</div>
-                            <div class="diagnosis">${item.diagnosis || 'N/A'}</div>
+                            <div class="patient-name">${patient_name}</div>
+                            <div class="diagnosis">${diagnosis}</div>
                             <div class="item-meta">
                                 <span class="source-type ${item.source_type}">${item.source_type}</span>
                                 <span>${date}</span>

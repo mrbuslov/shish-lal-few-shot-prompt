@@ -1,3 +1,4 @@
+import shutil
 from fastapi import APIRouter, Form, File, UploadFile, Depends, HTTPException, status
 from fastapi.responses import JSONResponse
 import asyncio
@@ -10,8 +11,7 @@ from docx import Document
 from pydantic import BaseModel
 from src.fastapi_app.services import (
     process_single_text,
-    process_single_document,
-    process_single_audio,
+    transcribe_single_audio,
 )
 from src.fastapi_app.schemas import ProcessJsonRequest, UploadBase64Request
 from src.fastapi_app.auth import get_current_user, get_current_admin_user
@@ -20,6 +20,7 @@ from src.utils.local_docx_formatter import LocalDocxFormatter
 from src.utils.consts import USER_REPORTS_FILES_DIR
 from src.common.models import User, ReportData, TranscriptionProcessingResult
 from src.common.db_facade import DatabaseFacade
+from src.utils.utils import extract_text_from_docx
 
 router = APIRouter(prefix="/api")
 
@@ -44,7 +45,7 @@ async def process_text(
         await transcription_facade.create(
             user_id=str(current_user.id),
             source_type="text",
-            source_text=llm_result.source_text,
+            source_text=text,
             processing_result=llm_result.model_dump(),
         )
 
@@ -67,9 +68,9 @@ async def process_documents(
 ) -> JSONResponse:
     try:
         # Prepare tasks for async processing
-        tasks = []
+        tasks = {}
 
-        for file in request.files:
+        for i, file in enumerate(request.files):
             if not file.filename.lower().endswith((".txt", ".docx", ".html")):
                 continue
 
@@ -79,12 +80,24 @@ async def process_documents(
             except Exception as decode_error:
                 print(f"Error decoding base64 for {file.filename}: {decode_error}")
                 continue
+            
+            
+            if file.filename.lower().endswith(".txt"):
+                file_content = file_bytes.decode("utf-8")
+            elif file.filename.lower().endswith(".docx"):
+                file_content = extract_text_from_docx(file_bytes)
+            else:
+                raise ValueError(f"Unsupported file type: {file.filename}")
 
             # Add task for async processing
-            task = process_single_document(
-                file_bytes, file.filename, str(current_user.id)
+            task = process_single_text(
+                file_content, str(current_user.id),
             )
-            tasks.append((task, file.filename))
+            tasks[i] = {
+                "task": task,
+                "file_content": file_content,
+                "filename": file.filename
+            }
 
         if not tasks:
             return JSONResponse(
@@ -92,7 +105,8 @@ async def process_documents(
             )
 
         task_results = await asyncio.gather(
-            *[task for task, filename in tasks], return_exceptions=True
+            *[v['task'] for v in tasks.values()], 
+            return_exceptions=True,
         )
 
         # Create results with file information and save to database
@@ -102,8 +116,6 @@ async def process_documents(
         for i, result in enumerate(task_results):
             if not isinstance(result, Exception):
                 result_dict = result.model_dump()
-                filename = tasks[i][1]
-                result_dict["source_filename"] = filename
                 result_dict["source_type"] = "document"
                 json_results.append(result_dict)
 
@@ -111,7 +123,7 @@ async def process_documents(
                 await transcription_facade.create(
                     user_id=str(current_user.id),
                     source_type="document",
-                    source_text=result.source_text,
+                    source_text=tasks[i]['file_content'],
                     processing_result=result_dict,
                 )
 
@@ -140,36 +152,65 @@ async def process_audio(
     files: List[UploadFile] = File(...), current_user: User = Depends(get_current_user)
 ) -> JSONResponse:
     try:
-        # Prepare tasks for async processing
-        tasks = []
+        # Prepare transcription tasks for async processing
+        transcription_tasks = {}
 
-        for file in files:
+        for i, file in enumerate(files):
             if not file.filename.lower().endswith((".mp3", ".m4a")):
                 continue
 
             file_content = await file.read()
-            task = process_single_audio(
-                file_content, file.filename, str(current_user.id)
-            )
-            tasks.append((task, file.filename))
-        if not tasks:
+            # First gather: transcribe all audio files
+            transcription_task = transcribe_single_audio(file_content, file.filename)
+            transcription_tasks[i] = {
+                "task": transcription_task,
+                "filename": file.filename
+            }
+
+        if not transcription_tasks:
             return JSONResponse(
                 content={"error": "No valid audio files to process"}, status_code=400
             )
 
-        task_results = await asyncio.gather(
-            *[task for task, filename in tasks], return_exceptions=True
+        # First asyncio.gather: Transcribe all audio files in parallel
+        transcription_results = await asyncio.gather(
+            *[v['task'] for v in transcription_tasks.values()], 
+            return_exceptions=True,
+        )
+
+        # Prepare processing tasks for transcribed texts
+        processing_tasks = {}
+        for i, transcription_result in enumerate(transcription_results):
+            if not isinstance(transcription_result, Exception):
+                # Second gather: process all transcriptions as text
+                processing_task = process_single_text(
+                    transcription_result, str(current_user.id)
+                )
+                processing_tasks[i] = {
+                    "task": processing_task,
+                    "transcribed_text": transcription_result,
+                    "filename": transcription_tasks[i]['filename']
+                }
+
+        if not processing_tasks:
+            return JSONResponse(
+                content={"error": "No audio files could be transcribed successfully"},
+                status_code=400,
+            )
+
+        # Second asyncio.gather: Process all transcriptions in parallel
+        processing_results = await asyncio.gather(
+            *[v['task'] for v in processing_tasks.values()], 
+            return_exceptions=True,
         )
 
         # Create results with file information and save to database
         json_results = []
         transcription_facade = DatabaseFacade(TranscriptionProcessingResult)
 
-        for i, result in enumerate(task_results):
+        for i, result in enumerate(processing_results):
             if not isinstance(result, Exception):
                 result_dict = result.model_dump()
-                filename = tasks[i][1]
-                result_dict["source_filename"] = filename
                 result_dict["source_type"] = "audio"
                 json_results.append(result_dict)
 
@@ -177,7 +218,7 @@ async def process_audio(
                 await transcription_facade.create(
                     user_id=str(current_user.id),
                     source_type="audio",
-                    source_text=result.source_text,
+                    source_text=processing_tasks[i]['transcribed_text'],
                     processing_result=result_dict,
                 )
 
@@ -437,7 +478,8 @@ async def get_users_list(email: str = Form(...), password: str = Form(...)):
     """Get all users list for admin"""
     try:
         # Verify admin credentials
-        if not await get_current_admin_user(email, password):
+        admin = await get_current_admin_user(email, password)
+        if not admin:
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail="Invalid admin credentials",
@@ -480,7 +522,8 @@ async def delete_user(user_id: str, email: str = Form(...), password: str = Form
     """Delete a user (admin only)"""
     try:
         # Verify admin credentials
-        if not await get_current_admin_user(email, password):
+        admin = await get_current_admin_user(email, password)
+        if not admin:
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail="Invalid admin credentials",
@@ -495,7 +538,6 @@ async def delete_user(user_id: str, email: str = Form(...), password: str = Form
             )
 
         # Prevent self-deletion of admin
-        admin = await get_current_admin_user(email, password)
         if str(admin.id) == user_id:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
@@ -512,8 +554,6 @@ async def delete_user(user_id: str, email: str = Form(...), password: str = Form
         await transcription_facade.delete_many(user_id=user_id)
 
         # Delete user files directory if exists
-        import shutil
-
         user_dir = os.path.join(USER_REPORTS_FILES_DIR, user_id)
         if os.path.exists(user_dir):
             shutil.rmtree(user_dir)
@@ -617,7 +657,6 @@ async def get_history_item(
             content={
                 "id": str(result.id),
                 "source_type": result.source_type,
-                "source_text": result.source_text,
                 "processing_result": result.processing_result,
                 "created_at": result.created_at.isoformat(),
             }

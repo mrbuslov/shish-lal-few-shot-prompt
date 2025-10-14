@@ -20,6 +20,10 @@ from src.utils.utils import (
 LLM_TEXT_PROCESSOR_OUTPUT_FORMAT = {
     name: field.description for name, field in LlmStageOutput.model_fields.items()
 }
+LLM_TEXT_PROCESSOR_OUTPUT_FORMAT = {
+    "reasoning": "Short thought what fields you're going to fill in with what values - abstract",
+    **LLM_TEXT_PROCESSOR_OUTPUT_FORMAT
+}
 
 llm = ChatAnthropic(
     model="claude-sonnet-4-20250514",
@@ -120,6 +124,7 @@ async def process_stage_two(
         Below is generated final report for my patient
         Your task is check if final report is correct up to important notes
         Return JSON with fixed fields. If nothing to fix, return as it is. Do not write anything else.
+        Note: patient letter must not have any other fields content, only letter content
         
         # Important notes 
         {json.dumps(prompts_data['important_notes'])}
@@ -149,39 +154,11 @@ async def process_single_text(text: str, user_id: str = None) -> LlmStageOutput:
     # Stage 1 & 2 processing
     stage_one_result = await process_stage_one(text, user_id)
     final_llm_res = await process_stage_two(stage_one_result, user_id)
-    final_llm_res.source_text = text
     return final_llm_res
 
 
-async def process_single_document(
-    file_bytes: bytes, filename: str, user_id: str = None
-) -> LlmStageOutput:
-    """Process a single document file and return LlmStageOutput"""
-    # Extract text content based on file type
-    if filename.lower().endswith(".txt"):
-        file_content = file_bytes.decode("utf-8")
-    elif filename.lower().endswith(".docx"):
-        file_content = extract_text_from_docx(file_bytes)
-    else:
-        raise ValueError(f"Unsupported file type: {filename}")
-
-    # Process the content
-    stage_one_result = await process_stage_one(file_content, user_id)
-    final_llm_res = await process_stage_two(stage_one_result, user_id)
-    final_llm_res.source_text = file_content
-    return final_llm_res
-
-
-async def process_single_audio(
-    audio_bytes: bytes, filename: str, user_id: str = None
-) -> LlmStageOutput:
-    """Process a single audio file and return LlmStageOutput"""
-    # Transcribe audio
+async def transcribe_single_audio(audio_bytes: bytes, filename: str) -> str:
+    """Transcribe a single audio file and return the transcribed text"""
     transcribed_text = await transcribe_audio_with_openai(audio_bytes, filename)
     print(f"Transcribed text: {transcribed_text}")
-
-    # Process the transcribed content
-    stage_one_result = await process_stage_one(transcribed_text, user_id)
-    final_llm_res = await process_stage_two(stage_one_result, user_id)
-    final_llm_res.source_text = transcribed_text
-    return final_llm_res
+    return transcribed_text
