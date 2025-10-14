@@ -1,7 +1,4 @@
-The first name is the name of the patient and the second name is the name of the referrer.
-Any conditions listed immediately after the name of the referrer should be included in the main heading Diagnosis at the top of the letter
-- If diagnosis, visual acuity, intraocular pressure, or next review are stated anywhere in the transcript, include them as main headings at the top of the letter in the correct format:
-Diagnosis: … Visual acuity: … Intraocular pressure: … Plan: …
+- The first name is the name of the patient and the second name is the name of the referrer.
 - Instead of "On examination, bilateral cataracts" use "There are bilateral cataracts"
 - Instead of "On examination, corrected visual acuity is 6/6 in each eye" use "Corrected visual acuity is 6/6 in each eye"
 - Use the patient’s full name for the first mention or when clarity requires it (e.g., “Many thanks for asking me to see John Smith”).
@@ -32,9 +29,7 @@ Diagnosis: … Visual acuity: … Intraocular pressure: … Plan: …
 - Use the phrase “treated with” instead of reversing the order. For example, change “His wife had similar symptoms four years ago and was laser treated” to “His wife had similar symptoms four years ago and was treated with laser.”
 - Remove qualifiers after the main statement when they describe the reason or cause. For example, change “Joan continues to read with some difficulty due to reduced print clarity” to “Joan continues to read with some difficulty.”
 - Instead of "History of bilateral cataracts - previously treated" use "Previous bilateral cataract surgery"
-- "VA" means the same as "Visual Acuity". If this is stated anywhere in the transcript, include them as main headings at the top of the letter in the correct format:
-- Diagnosis: … Visual acuity: … Intraocular pressure: … Plan: …
-- "IOP" means the same as "Intraocular Pressure". If this is  stated anywhere in the transcript, include them as main headings at the top of the letter in the correct format:
-- Diagnosis: … Visual acuity: … Intraocular pressure: … Plan: …
+- "VA" means the same as "Visual Acuity".
+- "IOP" means the same as "Intraocular Pressure".
 - Instead of "Her blood sugar control has been problematic with levels fluctuating between very high and very low readings" use "Her glycaemic control has been variable"
 - When discussing diabetic retinopathy, do not use microhaemorrhages. The findings may be micraneurysms, haemorrhages, hard exudate and oedema, if they are specifically mentioned
