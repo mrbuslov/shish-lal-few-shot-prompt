@@ -30,22 +30,22 @@ class DatabaseFacade:
         return await self.model_class.find_one(filters)
 
     async def get_many(
-        self, 
+        self,
         filters: Optional[Dict[str, Any]] = None,
         limit: Optional[int] = None,
         skip: Optional[int] = None,
-        sort: Optional[List[tuple]] = None
+        sort: Optional[List[tuple]] = None,
     ) -> List[T]:
         """Get multiple documents with optional filtering, pagination and sorting"""
         query = self.model_class.find(filters or {})
-        
+
         if skip:
             query = query.skip(skip)
         if limit:
             query = query.limit(limit)
         if sort:
             query = query.sort(sort)
-            
+
         return await query.to_list()
 
     async def update_by_id(self, doc_id: str, **updates) -> Optional[T]:
@@ -53,10 +53,10 @@ class DatabaseFacade:
         document = await self.get_by_id(doc_id)
         if not document:
             return None
-        
+
         for key, value in updates.items():
             setattr(document, key, value)
-        
+
         await document.save()
         return document
 
@@ -65,10 +65,10 @@ class DatabaseFacade:
         document = await self.get_one(**filters)
         if not document:
             return None
-        
+
         for key, value in updates.items():
             setattr(document, key, value)
-        
+
         await document.save()
         return document
 
@@ -77,7 +77,7 @@ class DatabaseFacade:
         document = await self.get_by_id(doc_id)
         if not document:
             return False
-        
+
         await document.delete()
         return True
 
@@ -86,13 +86,25 @@ class DatabaseFacade:
         document = await self.get_one(**filters)
         if not document:
             return False
-        
+
         await document.delete()
         return True
 
+    async def delete_many(self, **filters) -> int:
+        """Delete multiple documents by filters"""
+        documents = await self.get_many(filters)
+        count = 0
+        for doc in documents:
+            await doc.delete()
+            count += 1
+        return count
+
     async def count(self, filters: Optional[Dict[str, Any]] = None) -> int:
         """Count documents matching filters"""
-        return await self.model_class.count(filters or {})
+        if filters:
+            return await self.model_class.find(filters).count()
+        else:
+            return await self.model_class.count()
 
     async def exists(self, **filters) -> bool:
         """Check if document exists"""

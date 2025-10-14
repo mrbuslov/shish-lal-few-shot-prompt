@@ -14,19 +14,20 @@ from passlib.context import CryptContext
 from fastapi.templating import Jinja2Templates
 
 from src.fastapi_app.routes import router as main_router
-from src.fastapi_app.auth import router as auth_router, get_current_user, get_current_admin_user
+from src.fastapi_app.auth import (
+    router as auth_router,
+    get_current_user,
+    get_current_admin_user,
+)
 from src.utils.consts import USER_REPORTS_FILES_DIR
 from src.common.settings import settings
-from src.common.models import User, ReportData
+from src.common.models import User, ReportData, TranscriptionProcessingResult
 from src.common.db_facade import DatabaseFacade
 from src.utils.utils import load_default_prompt_files_data
 
 from passlib.context import CryptContext
 
-pwd_context = CryptContext(
-    schemes=["argon2", "bcrypt"],
-    deprecated="auto"
-)
+pwd_context = CryptContext(schemes=["argon2", "bcrypt"], deprecated="auto")
 
 # Generate cache-busting hash for static files
 STATIC_VERSION = hashlib.md5(str(time.time()).encode()).hexdigest()[:8]
@@ -35,35 +36,35 @@ STATIC_VERSION = hashlib.md5(str(time.time()).encode()).hexdigest()[:8]
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     print("Server is starting...")
-    
+
     # Create directories
     if not os.path.exists(USER_REPORTS_FILES_DIR):
         os.makedirs(USER_REPORTS_FILES_DIR)
-    
+
     # Initialize MongoDB
     client = AsyncIOMotorClient(settings.MONGODB_URL)
     await init_beanie(
         database=client[settings.MONGODB_DB_NAME],
-        document_models=[User, ReportData]
+        document_models=[User, ReportData, TranscriptionProcessingResult],
     )
-    
+
     # Create superadmin user if not exists
     user_facade = DatabaseFacade(User)
     superadmin = await user_facade.get_one(email=settings.AUTH_SUPERADMIN_EMAIL)
-    
+
     if not superadmin:
         hashed_password = pwd_context.hash(settings.AUTH_SUPERADMIN_PASSWORD)
         default_data = load_default_prompt_files_data()
-        
+
         # Create superadmin user
         superadmin = await user_facade.create(
             email=settings.AUTH_SUPERADMIN_EMAIL,
             hashed_password=hashed_password,
             is_superuser=True,
             is_active=True,
-            full_name="Super Administrator"
+            full_name="Super Administrator",
         )
-        
+
         # Create default ReportData for superadmin
         report_facade = DatabaseFacade(ReportData)
         await report_facade.create(
@@ -71,21 +72,24 @@ async def lifespan(app: FastAPI):
             few_shot_prompt=default_data.get("few_shot_prompt", ""),
             examples=default_data.get("examples", ""),
             important_notes=default_data.get("important_notes", ""),
-            words_spelling=default_data.get("words_spelling", "")
+            words_spelling=default_data.get("words_spelling", ""),
         )
-        
+
         print(f"Created superadmin user: {settings.AUTH_SUPERADMIN_EMAIL}")
     else:
         print(f"Superadmin user already exists: {settings.AUTH_SUPERADMIN_EMAIL}")
-    
+
     yield
-    
+
     print("Server is shutting down...")
     client.close()
 
+
 app = FastAPI(
-    title="Medical Text Processor", description="AI-powered medical text analysis",
+    title="Medical Text Processor",
+    description="AI-powered medical text analysis",
     lifespan=lifespan,
+    debug=settings.IS_DEBUG,
 )
 
 # Configure Jinja2 templates
@@ -106,10 +110,9 @@ async def home(request: Request):
         try:
             current_user = await get_current_user(request)
             # User is authenticated, serve the main page
-            return templates.TemplateResponse("index.html", {
-                "request": request,
-                "static_version": STATIC_VERSION
-            })
+            return templates.TemplateResponse(
+                "index.html", {"request": request, "static_version": STATIC_VERSION}
+            )
         except HTTPException:
             # User is not authenticated, redirect to login
             return RedirectResponse(url="/login", status_code=302)
@@ -124,24 +127,42 @@ async def login_page(request: Request):
     """Serve the login page"""
     return templates.TemplateResponse("login.html", {"request": request})
 
+
 @app.get("/signup", response_class=HTMLResponse)
 async def signup_page(request: Request):
     """Serve the signup page"""
     return templates.TemplateResponse("signup.html", {"request": request})
+
 
 @app.get("/admin", response_class=HTMLResponse)
 async def admin_page(request: Request):
     """Serve the admin page"""
     return templates.TemplateResponse("admin.html", {"request": request})
 
+
 @app.get("/me", response_class=HTMLResponse)
 async def me_page(request: Request):
     """Serve the user profile page with authentication check"""
     try:
         current_user = await get_current_user(request)
-        return templates.TemplateResponse("me.html", {"request": request, "user": current_user})
+        return templates.TemplateResponse(
+            "me.html", {"request": request, "user": current_user}
+        )
     except HTTPException:
         return RedirectResponse(url="/login", status_code=302)
+
+
+@app.get("/history", response_class=HTMLResponse)
+async def history_page(request: Request):
+    """Serve the processing history page with authentication check"""
+    try:
+        current_user = await get_current_user(request)
+        return templates.TemplateResponse(
+            "history.html", {"request": request, "user": current_user}
+        )
+    except HTTPException:
+        return RedirectResponse(url="/login", status_code=302)
+
 
 @app.get("/health")
 async def health_check():

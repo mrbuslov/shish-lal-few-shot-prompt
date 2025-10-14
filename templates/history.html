@@ -1,0 +1,530 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Processing History - Medical Text Processor</title>
+    <link rel="icon" type="image/x-icon" href="https://cdn.pixabay.com/photo/2021/03/18/07/42/icon-6104157_1280.png">
+    <link rel="stylesheet" href="/static/styles.css?v={{ static_version }}">
+    <style>
+        .history-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #fff;
+            border-radius: 1rem;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        
+        .history-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #e74c3c;
+        }
+        
+        .history-title {
+            color: #e74c3c;
+            font-size: 2em;
+            margin: 0;
+        }
+        
+        .back-button {
+            padding: 10px 20px;
+            background: #6c757d;
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+            transition: background 0.3s;
+        }
+        
+        .back-button:hover {
+            background: #5a6268;
+        }
+        
+        .history-item {
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 15px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        
+        .history-item:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+        }
+        
+        .item-header {
+            display: flex;
+            justify-content: between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        
+        .item-info {
+            flex-grow: 1;
+        }
+        
+        .patient-name {
+            font-size: 1.2em;
+            font-weight: bold;
+            color: #2c3e50;
+            margin-bottom: 5px;
+        }
+        
+        .diagnosis {
+            color: #7f8c8d;
+            margin-bottom: 10px;
+        }
+        
+        .item-meta {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+            font-size: 0.9em;
+            color: #6c757d;
+        }
+        
+        .source-type {
+            background: #e9ecef;
+            padding: 3px 8px;
+            border-radius: 12px;
+            text-transform: capitalize;
+        }
+        
+        .source-type.text {
+            background: #d1ecf1;
+            color: #0c5460;
+        }
+        
+        .source-type.document {
+            background: #d4edda;
+            color: #155724;
+        }
+        
+        .source-type.audio {
+            background: #fff3cd;
+            color: #856404;
+        }
+        
+        .view-button {
+            padding: 8px 16px;
+            background: #e74c3c;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+        
+        .view-button:hover {
+            background: #c0392b;
+        }
+        
+        .pagination {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 10px;
+            margin-top: 30px;
+            padding: 20px 0;
+        }
+        
+        .pagination button {
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            background: white;
+            cursor: pointer;
+            border-radius: 4px;
+        }
+        
+        .pagination button:hover:not(:disabled) {
+            background: #f8f9fa;
+        }
+        
+        .pagination button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        
+        .pagination .current-page {
+            background: #e74c3c;
+            color: white;
+            border-color: #e74c3c;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 50px;
+            color: #6c757d;
+        }
+        
+        .empty-state {
+            text-align: center;
+            padding: 50px;
+            color: #6c757d;
+        }
+        
+        .empty-state h3 {
+            margin-bottom: 10px;
+        }
+        
+        /* Modal styles */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+        }
+        
+        .modal-content {
+            background-color: white;
+            margin: 2% auto;
+            padding: 0;
+            border-radius: 10px;
+            width: 90%;
+            max-width: 800px;
+            max-height: 90vh;
+            overflow: hidden;
+            position: relative;
+        }
+        
+        .modal-header {
+            padding: 20px;
+            background: #e74c3c;
+            color: white;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .modal-title {
+            margin: 0;
+            font-size: 1.3em;
+        }
+        
+        .close {
+            color: white;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+            line-height: 1;
+        }
+        
+        .close:hover {
+            opacity: 0.7;
+        }
+        
+        .modal-body {
+            padding: 20px;
+            max-height: calc(90vh - 140px);
+            overflow-y: auto;
+        }
+        
+        .modal-footer {
+            padding: 15px 20px;
+            border-top: 1px solid #ddd;
+            text-align: right;
+        }
+        
+        .download-btn {
+            padding: 10px 20px;
+            background: #28a745;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+        
+        .download-btn:hover {
+            background: #218838;
+        }
+        
+        .result-field {
+            margin-bottom: 15px;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 5px;
+            border-left: 4px solid #e74c3c;
+        }
+        
+        .result-field-title {
+            font-weight: bold;
+            color: #2c3e50;
+            margin-bottom: 8px;
+            text-transform: capitalize;
+        }
+        
+        .result-field-content {
+            color: #495057;
+            line-height: 1.5;
+        }
+    </style>
+</head>
+<body>
+    <div class="history-container">
+        <div class="history-header">
+            <h1 class="history-title">📋 Processing History</h1>
+            <a href="/" class="back-button">← Back to Main</a>
+        </div>
+        
+        <div id="loading" class="loading">
+            Loading your processing history...
+        </div>
+        
+        <div id="history-content" style="display: none;">
+            <div id="history-list"></div>
+            <div id="pagination" class="pagination"></div>
+        </div>
+        
+        <div id="empty-state" class="empty-state" style="display: none;">
+            <h3>No processing history found</h3>
+            <p>Process some text, documents, or audio files to see your history here.</p>
+        </div>
+    </div>
+    
+    <!-- Modal for viewing details -->
+    <div id="detailModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title" id="modalTitle">Processing Details</h3>
+                <span class="close">&times;</span>
+            </div>
+            <div class="modal-body" id="modalBody">
+                <!-- Content will be loaded here -->
+            </div>
+            <div class="modal-footer">
+                <button id="downloadBtn" class="download-btn">📥 Download DOCX</button>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        let currentPage = 1;
+        let currentData = null;
+        
+        // Load history data
+        async function loadHistory(page = 1) {
+            currentPage = page;
+            
+            try {
+                document.getElementById('loading').style.display = 'block';
+                document.getElementById('history-content').style.display = 'none';
+                document.getElementById('empty-state').style.display = 'none';
+                
+                const response = await fetch(`/api/history?page=${page}&per_page=30`, {
+                    credentials: 'include'
+                });
+                
+                if (!response.ok) {
+                    throw new Error('Failed to load history');
+                }
+                
+                const data = await response.json();
+                currentData = data;
+                
+                document.getElementById('loading').style.display = 'none';
+                
+                if (data.items.length === 0) {
+                    document.getElementById('empty-state').style.display = 'block';
+                    return;
+                }
+                
+                renderHistory(data.items);
+                renderPagination(data.pagination);
+                document.getElementById('history-content').style.display = 'block';
+                
+            } catch (error) {
+                document.getElementById('loading').style.display = 'none';
+                alert('Error loading history: ' + error.message);
+            }
+        }
+        
+        // Render history items
+        function renderHistory(items) {
+            const container = document.getElementById('history-list');
+            container.innerHTML = '';
+            
+            items.forEach(item => {
+                const div = document.createElement('div');
+                div.className = 'history-item';
+                
+                const date = new Date(item.created_at).toLocaleDateString('en-US', {
+                    year: 'numeric',
+                    month: 'short',
+                    day: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit'
+                });
+                
+                div.innerHTML = `
+                    <div class="item-header">
+                        <div class="item-info">
+                            <div class="patient-name">${item.patient_name || 'N/A'}</div>
+                            <div class="diagnosis">${item.diagnosis || 'N/A'}</div>
+                            <div class="item-meta">
+                                <span class="source-type ${item.source_type}">${item.source_type}</span>
+                                <span>${date}</span>
+                            </div>
+                        </div>
+                        <button class="view-button" onclick="viewDetails('${item.id}')">View</button>
+                    </div>
+                `;
+                
+                container.appendChild(div);
+            });
+        }
+        
+        // Render pagination
+        function renderPagination(pagination) {
+            const container = document.getElementById('pagination');
+            container.innerHTML = '';
+            
+            // Previous button
+            const prevBtn = document.createElement('button');
+            prevBtn.textContent = '← Previous';
+            prevBtn.disabled = !pagination.has_prev;
+            prevBtn.onclick = () => loadHistory(pagination.page - 1);
+            container.appendChild(prevBtn);
+            
+            // Current page info
+            const pageInfo = document.createElement('span');
+            pageInfo.textContent = `Page ${pagination.page} of ${pagination.total_pages} (${pagination.total} items)`;
+            pageInfo.style.margin = '0 15px';
+            container.appendChild(pageInfo);
+            
+            // Next button
+            const nextBtn = document.createElement('button');
+            nextBtn.textContent = 'Next →';
+            nextBtn.disabled = !pagination.has_next;
+            nextBtn.onclick = () => loadHistory(pagination.page + 1);
+            container.appendChild(nextBtn);
+        }
+        
+        // View details modal
+        async function viewDetails(itemId) {
+            try {
+                const response = await fetch(`/api/history/${itemId}`, {
+                    credentials: 'include'
+                });
+                
+                if (!response.ok) {
+                    throw new Error('Failed to load details');
+                }
+                
+                const data = await response.json();
+                showModal(data);
+                
+            } catch (error) {
+                alert('Error loading details: ' + error.message);
+            }
+        }
+        
+        // Show modal with processing details
+        function showModal(data) {
+            const modal = document.getElementById('detailModal');
+            const body = document.getElementById('modalBody');
+            const title = document.getElementById('modalTitle');
+            
+            title.textContent = `Processing Details - ${new Date(data.created_at).toLocaleDateString()}`;
+            
+            let content = '';
+            
+            // Add source text
+            if (data.source_text) {
+                content += `
+                    <div class="result-field">
+                        <div class="result-field-title">Source Text (${data.source_type})</div>
+                        <div class="result-field-content">${data.source_text.substring(0, 500)}${data.source_text.length > 500 ? '...' : ''}</div>
+                    </div>
+                `;
+            }
+            
+            // Add processing results
+            const result = data.processing_result;
+            Object.keys(result).forEach(key => {
+                if (key !== 'source_text' && result[key] && result[key].trim !== '') {
+                    content += `
+                        <div class="result-field">
+                            <div class="result-field-title">${key.replace(/_/g, ' ')}</div>
+                            <div class="result-field-content">${result[key]}</div>
+                        </div>
+                    `;
+                }
+            });
+            
+            body.innerHTML = content;
+            
+            // Set up download button
+            const downloadBtn = document.getElementById('downloadBtn');
+            downloadBtn.onclick = () => downloadDocx(data.processing_result);
+            
+            modal.style.display = 'block';
+        }
+        
+        // Download DOCX
+        async function downloadDocx(processingResult) {
+            try {
+                const response = await fetch('/api/download_docx', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    credentials: 'include',
+                    body: JSON.stringify(processingResult)
+                });
+                
+                if (!response.ok) {
+                    throw new Error('Failed to generate DOCX');
+                }
+                
+                const data = await response.json();
+                
+                // Convert base64 to blob and download
+                const byteCharacters = atob(data.docx_base64);
+                const byteNumbers = new Array(byteCharacters.length);
+                for (let i = 0; i < byteCharacters.length; i++) {
+                    byteNumbers[i] = byteCharacters.charCodeAt(i);
+                }
+                const byteArray = new Uint8Array(byteNumbers);
+                const blob = new Blob([byteArray], {type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'});
+                
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = data.filename || 'medical_report.docx';
+                a.click();
+                URL.revokeObjectURL(url);
+                
+            } catch (error) {
+                alert('Error downloading DOCX: ' + error.message);
+            }
+        }
+        
+        // Modal event listeners
+        document.querySelector('.close').onclick = function() {
+            document.getElementById('detailModal').style.display = 'none';
+        }
+        
+        window.onclick = function(event) {
+            const modal = document.getElementById('detailModal');
+            if (event.target === modal) {
+                modal.style.display = 'none';
+            }
+        }
+        
+        // Load initial data
+        loadHistory();
+    </script>
+</body>
+</html>

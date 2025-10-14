@@ -60,7 +60,9 @@ async def process_stage_one(text: str, user_id: str = None) -> LlmStageOutput:
                 data = load_default_prompt_files_data()
         system_message = data["few_shot_prompt"].format(
             words_spelling=data["words_spelling"],
-            LLM_TEXT_PROCESSOR_OUTPUT_FORMAT=json.dumps(LLM_TEXT_PROCESSOR_OUTPUT_FORMAT),
+            LLM_TEXT_PROCESSOR_OUTPUT_FORMAT=json.dumps(
+                LLM_TEXT_PROCESSOR_OUTPUT_FORMAT
+            ),
             few_shot_examples=data["examples"],
             important_notes=data["important_notes"],
         )
@@ -77,7 +79,9 @@ async def process_stage_one(text: str, user_id: str = None) -> LlmStageOutput:
         raise
 
 
-async def process_stage_two(stage_one_output: LlmStageOutput, user_id: str = None) -> LlmStageOutput:
+async def process_stage_two(
+    stage_one_output: LlmStageOutput, user_id: str = None
+) -> LlmStageOutput:
     try:
         # Try to use specific user's data if user_id provided
         if user_id:
@@ -140,18 +144,18 @@ async def process_stage_two(stage_one_output: LlmStageOutput, user_id: str = Non
         raise
 
 
-
-
 async def process_single_text(text: str, user_id: str = None) -> LlmStageOutput:
     """Process a single text and return LlmStageOutput"""
     # Stage 1 & 2 processing
     stage_one_result = await process_stage_one(text, user_id)
     final_llm_res = await process_stage_two(stage_one_result, user_id)
-
+    final_llm_res.source_text = text
     return final_llm_res
 
 
-async def process_single_document(file_bytes: bytes, filename: str, user_id: str = None) -> LlmStageOutput:
+async def process_single_document(
+    file_bytes: bytes, filename: str, user_id: str = None
+) -> LlmStageOutput:
     """Process a single document file and return LlmStageOutput"""
     # Extract text content based on file type
     if filename.lower().endswith(".txt"):
@@ -164,11 +168,13 @@ async def process_single_document(file_bytes: bytes, filename: str, user_id: str
     # Process the content
     stage_one_result = await process_stage_one(file_content, user_id)
     final_llm_res = await process_stage_two(stage_one_result, user_id)
-
+    final_llm_res.source_text = file_content
     return final_llm_res
 
 
-async def process_single_audio(audio_bytes: bytes, filename: str, user_id: str = None) -> LlmStageOutput:
+async def process_single_audio(
+    audio_bytes: bytes, filename: str, user_id: str = None
+) -> LlmStageOutput:
     """Process a single audio file and return LlmStageOutput"""
     # Transcribe audio
     transcribed_text = await transcribe_audio_with_openai(audio_bytes, filename)
@@ -177,5 +183,5 @@ async def process_single_audio(audio_bytes: bytes, filename: str, user_id: str =
     # Process the transcribed content
     stage_one_result = await process_stage_one(transcribed_text, user_id)
     final_llm_res = await process_stage_two(stage_one_result, user_id)
-
+    final_llm_res.source_text = transcribed_text
     return final_llm_res

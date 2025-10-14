@@ -1,6 +1,7 @@
 from pydantic_settings import BaseSettings
 from pydantic import Field
 
+
 class Settings(BaseSettings):
     OPENAI_API_KEY: str = Field(
         ...,
@@ -30,8 +31,7 @@ class Settings(BaseSettings):
         ...,
         description="MongoDB database name",
     )
-    
-    
+
     class Config:
         env_file = ".env"
         env_file_encoding = "utf-8"

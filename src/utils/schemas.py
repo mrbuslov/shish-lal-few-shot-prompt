@@ -22,6 +22,9 @@ class FileData(BaseModel):
 
 
 class LlmStageOutput(BaseModel):
+    source_text: str | None = Field(
+        None, description="Original input text or transcription"
+    )
     recipients_info: str | None = Field(None, description="Recipients info")
     diagnosis: str | None = Field(None, description="Diagnosis")
     corrected_visual_acuity_right: str | None = Field(
