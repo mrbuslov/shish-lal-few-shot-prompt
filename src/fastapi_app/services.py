@@ -11,7 +11,6 @@ from src.utils.schemas import LlmStageOutput
 from src.utils.utils import (
     extract_text_from_docx,
     load_prompt_files,
-    clean_json_from_response,
     transcribe_audio_with_openai,
     load_default_prompt_files_data,
 )
@@ -30,6 +29,9 @@ llm = ChatAnthropic(
     api_key=settings.ANTHROPIC_API_KEY,
     max_tokens=64_000,
 )
+
+structured_llm = llm.with_structured_output(LlmStageOutput)
+
 
 
 async def process_stage_one(text: str, user_id: str = None) -> LlmStageOutput:
@@ -71,13 +73,12 @@ async def process_stage_one(text: str, user_id: str = None) -> LlmStageOutput:
             important_notes=data["important_notes"],
         )
         print("Starting stage 1 processing...")
-        response = await llm.ainvoke(
+        response = await structured_llm.ainvoke(
             [SystemMessage(content=system_message), HumanMessage(content=text)],
         )
-        print(response.content)
+        print("Stage 1 output:", response)
         print("Stage 1 processing completed.")
-        json_data = json.loads(clean_json_from_response(response.content))
-        return LlmStageOutput(**json_data)
+        return response
     except Exception as e:
         print(f"Error in stage 1 processing: {str(e)}")
         raise
@@ -132,17 +133,15 @@ async def process_stage_two(
         # Output format
         {json.dumps(LLM_TEXT_PROCESSOR_OUTPUT_FORMAT)}
         """
-        response = await llm.ainvoke(
+        response = await structured_llm.ainvoke(
             [
                 SystemMessage(content=system_message),
                 HumanMessage(content=stage_one_output.model_dump_json()),
             ]
         )
-        print(response.content)
+        print("Stage 2 output:", response)
         print("Stage 2 processing completed.")
-
-        res = json.loads(clean_json_from_response(response.content))
-        return LlmStageOutput(**res)
+        return response
 
     except Exception as e:
         print(f"Error in stage 2 processing: {str(e)} {traceback.format_exc()}")
