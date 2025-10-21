@@ -21,7 +21,7 @@ from src.fastapi_app.auth import (
 )
 from src.utils.consts import USER_REPORTS_FILES_DIR
 from src.common.settings import settings
-from src.common.models import User, ReportData, TranscriptionProcessingResult
+from src.common.models import User, ReportData, TranscriptionProcessingResult, AllowedEmails
 from src.common.db_facade import DatabaseFacade
 from src.utils.utils import load_default_prompt_files_data
 
@@ -45,7 +45,7 @@ async def lifespan(app: FastAPI):
     client = AsyncIOMotorClient(settings.MONGODB_URL)
     await init_beanie(
         database=client[settings.MONGODB_DB_NAME],
-        document_models=[User, ReportData, TranscriptionProcessingResult],
+        document_models=[User, ReportData, TranscriptionProcessingResult, AllowedEmails],
     )
 
     # Create superadmin user if not exists
@@ -86,7 +86,7 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(
-    title="Medical Text Processor",
+    title="YourScribe",
     description="AI-powered medical text analysis",
     lifespan=lifespan,
     debug=settings.IS_DEBUG,

@@ -18,7 +18,7 @@ from src.fastapi_app.auth import get_current_user, get_current_admin_user
 from src.utils.schemas import LlmStageOutput
 from src.utils.local_docx_formatter import LocalDocxFormatter
 from src.utils.consts import USER_REPORTS_FILES_DIR
-from src.common.models import User, ReportData, TranscriptionProcessingResult
+from src.common.models import User, ReportData, TranscriptionProcessingResult, AllowedEmails
 from src.common.db_facade import DatabaseFacade
 from src.utils.utils import extract_text_from_docx
 
@@ -294,8 +294,19 @@ async def download_docx(
         # Clean up temp file
         os.remove(temp_path)
 
+        # Extract patient name for filename
+        patient_name = data_dict.get("recipients_info", "").strip()
+        if patient_name:
+            # Clean patient name for safe filename
+            import re
+            safe_name = re.sub(r'[^\w\s-]', '', patient_name)
+            safe_name = re.sub(r'[\s_]+', '_', safe_name)
+            filename = f"{safe_name}_medical_report.docx"
+        else:
+            filename = "medical_report.docx"
+
         return JSONResponse(
-            content={"docx_base64": base64_content, "filename": "medical_report.docx"}
+            content={"docx_base64": base64_content, "filename": filename}
         )
 
     except Exception as e:
@@ -668,4 +679,71 @@ async def get_history_item(
         print(f"Error getting history item: {str(e)}")
         return JSONResponse(
             content={"error": "Failed to get history item"}, status_code=500
+        )
+
+
+@router.post("/admin/allowed-emails/get")
+async def get_allowed_emails(email: str = Form(...), password: str = Form(...)):
+    """Get allowed emails list (admin only)"""
+    try:
+        # Verify admin credentials
+        admin = await get_current_admin_user(email, password)
+        if not admin:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Invalid admin credentials",
+            )
+
+        allowed_emails_facade = DatabaseFacade(AllowedEmails)
+        allowed_emails = await allowed_emails_facade.get_one()
+        
+        if not allowed_emails:
+            # Create default empty allowed emails
+            allowed_emails = await allowed_emails_facade.create(emails="")
+        
+        return JSONResponse(content={"emails": allowed_emails.emails})
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"Error getting allowed emails: {str(e)}")
+        return JSONResponse(
+            content={"error": "Failed to get allowed emails"}, status_code=500
+        )
+
+
+@router.post("/admin/allowed-emails")
+async def update_allowed_emails(
+    email: str = Form(...), password: str = Form(...), emails: str = Form(...)
+):
+    """Update allowed emails list (admin only)"""
+    try:
+        # Verify admin credentials
+        admin = await get_current_admin_user(email, password)
+        if not admin:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Invalid admin credentials",
+            )
+
+        allowed_emails_facade = DatabaseFacade(AllowedEmails)
+        existing = await allowed_emails_facade.get_one()
+        
+        if existing:
+            await allowed_emails_facade.update_by_id(
+                str(existing.id),
+                emails=emails,
+                updated_at=datetime.now(timezone.utc),
+            )
+        else:
+            await allowed_emails_facade.create(emails=emails)
+        
+        return JSONResponse(content={"message": "Allowed emails updated successfully"})
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"Error updating allowed emails: {str(e)}")
+        return JSONResponse(
+            content={"error": "Failed to update allowed emails"}, status_code=500
         )

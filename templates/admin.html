@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin Access - Medical Text Processor</title>
+    <title>Admin Access - YourScribe</title>
     <link rel="icon" type="image/x-icon" href="https://cdn.pixabay.com/photo/2021/03/18/07/42/icon-6104157_1280.png">
     <link rel="stylesheet" href="/static/styles.css?v={{ static_version }}">
     <style>
@@ -225,33 +225,54 @@
         </div>
     </div>
 
-    <!-- Users List (shown after successful authentication) -->
+    <!-- Admin Dashboard (shown after successful authentication) -->
     <div class="users-container" id="usersContainer">
         <div class="users-header">
-            <h1>👥 User Management</h1>
+            <h1>👥 Admin Dashboard</h1>
+            <p>System Management</p>
+        </div>
+        
+        <!-- Allowed Emails Section -->
+        <div class="allowed-emails-section">
+            <h3>📧 Allowed Email Addresses</h3>
+            <p>Only users with these email addresses can register on the site. Enter emails separated by commas.</p>
+            <div class="form-group">
+                <label for="allowedEmails">Allowed Emails (comma-separated):</label>
+                <textarea id="allowedEmails" rows="4" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 5px;" placeholder="user1@example.com, user2@example.com, doctor@clinic.com"></textarea>
+            </div>
+            <button type="button" class="btn-auth" id="saveAllowedEmailsBtn">💾 Save Allowed Emails</button>
+            <div class="success-message" id="emailsSuccessMessage"></div>
+            <div class="error-message" id="emailsErrorMessage"></div>
+        </div>
+        
+        <hr style="margin: 30px 0; border: none; border-top: 1px solid #eee;">
+        
+        <!-- Users Management Section -->
+        <div class="users-section">
+            <h3>👥 User Management</h3>
             <p>System Users Overview</p>
+            
+            <div id="usersLoading" style="text-align: center; display: none;">
+                Loading users...
+            </div>
+            
+            <table class="users-table" id="usersTable" style="display: none;">
+                <thead>
+                    <tr>
+                        <th>Email</th>
+                        <th>Full Name</th>
+                        <th>Status</th>
+                        <th>Role</th>
+                        <th>Created</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="usersTableBody">
+                </tbody>
+            </table>
+            
+            <div class="error-message" id="usersErrorMessage"></div>
         </div>
-        
-        <div id="usersLoading" style="text-align: center; display: none;">
-            Loading users...
-        </div>
-        
-        <table class="users-table" id="usersTable" style="display: none;">
-            <thead>
-                <tr>
-                    <th>Email</th>
-                    <th>Full Name</th>
-                    <th>Status</th>
-                    <th>Role</th>
-                    <th>Created</th>
-                    <th>Actions</th>
-                </tr>
-            </thead>
-            <tbody id="usersTableBody">
-            </tbody>
-        </table>
-        
-        <div class="error-message" id="usersErrorMessage"></div>
     </div>
 
     <script>
@@ -294,6 +315,7 @@
                     setTimeout(() => {
                         document.getElementById('authContainer').style.display = 'none';
                         document.getElementById('usersContainer').style.display = 'block';
+                        loadAllowedEmails();
                         loadUsers();
                     }, 1500);
                 } else {
@@ -305,6 +327,70 @@
                 errorMessage.style.display = 'block';
             }
         });
+        
+        // Add event listener for save allowed emails button
+        document.getElementById('saveAllowedEmailsBtn').addEventListener('click', saveAllowedEmails);
+        
+        async function loadAllowedEmails() {
+            try {
+                const response = await fetch('/api/admin/allowed-emails/get', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                    },
+                    body: new URLSearchParams({
+                        email: adminCredentials.email,
+                        password: adminCredentials.password
+                    })
+                });
+                
+                const result = await response.json();
+                
+                if (response.ok) {
+                    document.getElementById('allowedEmails').value = result.emails || '';
+                } else {
+                    console.error('Failed to load allowed emails:', result.error);
+                }
+            } catch (error) {
+                console.error('Error loading allowed emails:', error);
+            }
+        }
+        
+        async function saveAllowedEmails() {
+            const emailsSuccessMessage = document.getElementById('emailsSuccessMessage');
+            const emailsErrorMessage = document.getElementById('emailsErrorMessage');
+            const emails = document.getElementById('allowedEmails').value;
+            
+            emailsSuccessMessage.style.display = 'none';
+            emailsErrorMessage.style.display = 'none';
+            
+            try {
+                const response = await fetch('/api/admin/allowed-emails', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                    },
+                    body: new URLSearchParams({
+                        email: adminCredentials.email,
+                        password: adminCredentials.password,
+                        emails: emails
+                    })
+                });
+                
+                const result = await response.json();
+                
+                if (response.ok) {
+                    emailsSuccessMessage.textContent = result.message || 'Allowed emails updated successfully!';
+                    emailsSuccessMessage.style.display = 'block';
+                } else {
+                    emailsErrorMessage.textContent = result.detail || result.error || 'Failed to update allowed emails';
+                    emailsErrorMessage.style.display = 'block';
+                }
+            } catch (error) {
+                emailsErrorMessage.textContent = 'Connection error. Please try again.';
+                emailsErrorMessage.style.display = 'block';
+            }
+        }
         
         async function loadUsers() {
             const usersLoading = document.getElementById('usersLoading');

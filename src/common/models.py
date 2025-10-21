@@ -54,3 +54,12 @@ class TranscriptionProcessingResult(Document):
             IndexModel([("created_at", -1)]),
             IndexModel([("user_id", 1), ("created_at", -1)]),
         ]
+
+
+class AllowedEmails(Document):
+    emails: str = Field(..., description="Comma-separated list of allowed email addresses")
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    updated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+    class Settings:
+        name = "allowed_emails"

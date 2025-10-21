@@ -7,7 +7,7 @@ from passlib.context import CryptContext
 from jose import JWTError, jwt
 import os
 
-from src.common.models import User, ReportData
+from src.common.models import User, ReportData, AllowedEmails
 from src.common.db_facade import DatabaseFacade
 from src.common.settings import settings
 from src.utils.utils import load_default_prompt_files_data
@@ -32,6 +32,23 @@ def verify_password(plain_password: str, hashed_password: str) -> bool:
 def get_password_hash(password: str) -> str:
     """Generate password hash"""
     return pwd_context.hash(password)
+
+
+async def is_email_allowed(email: str) -> bool:
+    """Check if email is in the allowed emails list"""
+    try:
+        allowed_emails_facade = DatabaseFacade(AllowedEmails)
+        allowed_emails_doc = await allowed_emails_facade.get_one()
+        
+        if not allowed_emails_doc or not allowed_emails_doc.emails:
+            return False
+        
+        allowed_emails = [e.strip().lower() for e in allowed_emails_doc.emails.split(',') if e.strip()]
+        return email.lower() in allowed_emails
+    except Exception as e:
+        print(f"Error checking allowed emails: {str(e)}")
+        # If there's an error, allow email to avoid blocking users
+        return True
 
 
 def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
@@ -108,6 +125,13 @@ async def get_current_admin_user(email: str, password: str) -> Optional[User]:
 @router.post("/login")
 async def login(email: str = Form(...), password: str = Form(...)):
     """Login endpoint"""
+    # Check if email is allowed
+    if not await is_email_allowed(email):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Email address not authorized to access this system",
+        )
+
     user_facade = DatabaseFacade(User)
     user = await user_facade.get_one(email=email)
 
@@ -137,6 +161,13 @@ async def signup(
     email: str = Form(...), password: str = Form(...), full_name: str = Form(...)
 ):
     """Signup endpoint"""
+    # Check if email is allowed
+    if not await is_email_allowed(email):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Email address not authorized to register on this system",
+        )
+
     user_facade = DatabaseFacade(User)
 
     # Check if user already exists
