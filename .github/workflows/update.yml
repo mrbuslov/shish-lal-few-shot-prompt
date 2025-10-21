@@ -31,12 +31,19 @@ jobs:
             
             mkdir -p docker/nginx/sites-enabled temp files/user_reports logs
             
-            # Enable nginx site configuration
+            # Enable nginx site configurations
             ln -sf ../sites-available/drlal.com.au docker/nginx/sites-enabled/drlal.com.au
+            ln -sf ../sites-available/yourscribe.com.au docker/nginx/sites-enabled/yourscribe.com.au
             
             docker compose -f docker-compose.prod.yml build || { echo "❌ Docker build failed"; exit 1; }
             docker compose -f docker-compose.prod.yml down
             docker compose -f docker-compose.prod.yml up -d || { echo "❌ Docker up failed"; exit 1; }
+            
+            # Set up SSL certificates for new domains if needed
+            if [ ! -f /etc/letsencrypt/live/yourscribe.com.au/fullchain.pem ]; then
+              echo "🔒 Setting up SSL for yourscribe.com.au..."
+              bash docker/setup-ssl.sh
+            fi
             
             # Clean up old unused images
             docker image prune -af
