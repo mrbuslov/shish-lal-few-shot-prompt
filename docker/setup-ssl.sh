@@ -8,7 +8,7 @@ echo "🔒 Setting up SSL certificates for $DOMAIN"
 
 # Generate certificate using certbot
 echo "📋 Generating SSL certificate..."
-docker compose -f docker-compose.prod.yml run --rm certbot certbot certonly \
+docker compose -f docker-compose.prod.yml run --rm certbot certonly \
   --webroot \
   --webroot-path=/var/www/certbot \
   --email $EMAIL \
