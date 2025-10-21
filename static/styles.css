@@ -317,12 +317,15 @@ textarea:focus {
 }
 
 .btn-secondary {
-    background: linear-gradient(135deg, #95a5a6 0%, #7f8c8d 100%);
-    box-shadow: 0 4px 15px rgba(149, 165, 166, 0.3);
+    padding: 1rem;
+    border-radius: 1rem;
+    outline: none;
+    border: none;
 }
 
 .btn-secondary:hover {
     box-shadow: 0 6px 20px rgba(149, 165, 166, 0.4);
+    cursor: pointer;
 }
 
 .loading {

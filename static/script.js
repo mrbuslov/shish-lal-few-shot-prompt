@@ -554,13 +554,31 @@ async function downloadSingleDocx(index, btnElement) {
             letter_to_patient: formData.get('letter_to_patient')
         };
         
+        // Extract patient name from recipients_info
+        let patientName = '';
+        const recipientsInfo = formData.get('recipients_info');
+        if (recipientsInfo) {
+            // Convert HTML to text and take first line only
+            const tempDiv = document.createElement('div');
+            tempDiv.innerHTML = recipientsInfo;
+            const textOnly = tempDiv.textContent || tempDiv.innerText || '';
+            patientName = textOnly.split('\n')[0].trim();
+        }
+        
         // Send to download_docx endpoint
+        const requestBody = {
+            data: updatedData
+        };
+        if (patientName) {
+            requestBody.patient_name = patientName;
+        }
+        
         const response = await fetch('/api/download_docx', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
             },
-            body: JSON.stringify(updatedData)
+            body: JSON.stringify(requestBody)
         });
         
         if (response.ok) {
@@ -572,8 +590,7 @@ async function downloadSingleDocx(index, btnElement) {
             
             // Download the DOCX file
             const base64Data = responseData.docx_base64;
-            const sourceFilename = currentJsonDataArray[index].source_filename || `result_${index + 1}`;
-            const filename = `${sourceFilename.split('.')[0]}_report.docx`;
+            const filename = responseData.filename || 'medical_report.docx';
             
             downloadBase64AsDocx(base64Data, filename);
             
@@ -636,18 +653,36 @@ document.getElementById('downloadAllDocxBtn').addEventListener('click', async fu
                 letter_to_patient: formData.get('letter_to_patient')
             };
             
+            // Extract patient name from recipients_info
+            let patientName = '';
+            const recipientsInfo = formData.get('recipients_info');
+            if (recipientsInfo) {
+                // Convert HTML to text and take first line only
+                const tempDiv = document.createElement('div');
+                tempDiv.innerHTML = recipientsInfo;
+                const textOnly = tempDiv.textContent || tempDiv.innerText || '';
+                patientName = textOnly.split('\n')[0].trim();
+            }
+            
+            // Send to download_docx endpoint
+            const requestBody = {
+                data: updatedData
+            };
+            if (patientName) {
+                requestBody.patient_name = patientName;
+            }
+            
             const downloadPromise = fetch('/api/download_docx', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify(updatedData)
+                body: JSON.stringify(requestBody)
             }).then(response => {
                 if (response.ok) {
                     return response.json().then(data => {
                         if (data.error) throw new Error(data.error);
-                        const sourceFilename = currentJsonDataArray[i].source_filename || `result_${i + 1}`;
-                        const filename = `${sourceFilename.split('.')[0]}_report.docx`;
+                        const filename = data.filename || `result_${i + 1}_medical_report.docx`;
                         return { base64: data.docx_base64, filename };
                     });
                 } else {
@@ -843,6 +878,24 @@ discardRecordBtn.addEventListener('click', function() {
     resetRecordingUI();
 });
 
+// Download recording
+const downloadRecordBtn = document.getElementById('downloadRecordBtn');
+downloadRecordBtn.addEventListener('click', function() {
+    if (!audioPlayback.recordedBlob) {
+        alert('No recording available to download.');
+        return;
+    }
+    
+    const url = URL.createObjectURL(audioPlayback.recordedBlob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `recording_${new Date().toISOString().replace(/[:.]/g, '-')}.webm`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+});
+
 // Send recording to backend
 sendRecordBtn.addEventListener('click', async function() {
     if (!audioPlayback.recordedBlob) {
@@ -853,15 +906,23 @@ sendRecordBtn.addEventListener('click', async function() {
     const btn = sendRecordBtn;
     const originalText = btn.textContent;
     
+    // Get selected processing type
+    const processingType = document.querySelector('input[name="recordingProcessingType"]:checked').value;
+    
     btn.disabled = true;
     btn.textContent = 'Sending...';
     hideResultAndLoading();
-    showLoading("Processing recorded audio...");
+    
+    const loadingText = processingType === 'dictation' 
+        ? "Processing recorded audio as dictation (preserving every word)..."
+        : "Processing recorded audio...";
+    showLoading(loadingText);
     
     try {
         const formData = new FormData();
         const filename = `recording_${Date.now()}.mp3`;
         formData.append('files', audioPlayback.recordedBlob, filename);
+        formData.append('processing_type', processingType);
         
         const response = await fetch('/api/process_audio', {
             method: 'POST',

@@ -13,6 +13,7 @@ class FileData(BaseModel):
 
 
 class LlmStageOutput(BaseModel):
+    reasoning: str | None = Field(None, description="Very short thoughts what fields you're going to fill in with what values - abstract")
     recipients_info: str | None = Field(None, description="Recipients info")
     diagnosis: str | None = Field(None, description="Diagnosis")
     corrected_visual_acuity_right: str | None = Field(

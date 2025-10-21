@@ -64,7 +64,7 @@
         <!-- Tab Navigation -->
         <div class="tab-container">
             <div class="tabs">
-                <button class="tab active" data-tab="textarea">Text Input</button>
+                <button class="tab active" data-tab="textarea">Transcription</button>
                 <button class="tab" data-tab="documents">Document Transcriptions</button>
                 <button class="tab" data-tab="audio">Audio Files</button>
                 <button class="tab" data-tab="recording">Recording</button>
@@ -138,6 +138,22 @@
             <div class="tab-content" id="recording">
                 <div class="form-group">
                     <label>Record Audio via Microphone:</label>
+                    
+                    <!-- Processing Type Selection -->
+                    <div class="form-group" style="margin-bottom: 20px;">
+                        <label style="font-size: 16px; margin-bottom: 10px; display: block;">Processing Type:</label>
+                        <div style="display: flex; gap: 20px; align-items: center;">
+                            <label style="display: flex; align-items: center; cursor: pointer;">
+                                <input type="radio" name="recordingProcessingType" value="transcription" checked style="margin-right: 8px;">
+                                <span>Transcription (Standard processing)</span>
+                            </label>
+                            <label style="display: flex; align-items: center; cursor: pointer;">
+                                <input type="radio" name="recordingProcessingType" value="dictation" style="margin-right: 8px;">
+                                <span>Dictation (Keep every word exactly as spoken)</span>
+                            </label>
+                        </div>
+                    </div>
+                    
                     <div class="recording-container">
                         <div class="recording-status">
                             <div class="recording-icon" id="recordingIcon">🎙️</div>
@@ -160,6 +176,7 @@
                             <audio controls id="audioPlayback" style="width: 100%; margin: 10px 0;"></audio>
                             <div class="preview-actions">
                                 <button type="button" class="btn-secondary" id="discardRecordBtn">🗑️ Discard</button>
+                                <button type="button" class="btn-secondary" id="downloadRecordBtn">💾 Download</button>
                                 <button type="button" class="btn" id="sendRecordBtn">📤 Send to Backend</button>
                             </div>
                         </div>

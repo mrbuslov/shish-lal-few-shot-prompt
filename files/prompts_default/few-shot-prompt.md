@@ -66,9 +66,6 @@ If "File number" is mentioned in the recording or text, it should appear like th
 ## Correct words spelling
 {words_spelling}
 
-## Output Format Example
-{LLM_TEXT_PROCESSOR_OUTPUT_FORMAT}
-
 **FEW-SHOT EXAMPLES**
 
 {few_shot_examples}

@@ -15,15 +15,6 @@ from src.utils.utils import (
     load_default_prompt_files_data,
 )
 
-
-LLM_TEXT_PROCESSOR_OUTPUT_FORMAT = {
-    name: field.description for name, field in LlmStageOutput.model_fields.items()
-}
-LLM_TEXT_PROCESSOR_OUTPUT_FORMAT = {
-    "reasoning": "Short thought what fields you're going to fill in with what values - abstract",
-    **LLM_TEXT_PROCESSOR_OUTPUT_FORMAT
-}
-
 llm = ChatAnthropic(
     model="claude-sonnet-4-20250514",
     api_key=settings.ANTHROPIC_API_KEY,
@@ -34,7 +25,7 @@ structured_llm = llm.with_structured_output(LlmStageOutput)
 
 
 
-async def process_stage_one(text: str, user_id: str = None) -> LlmStageOutput:
+async def process_stage_one(text: str, user_id: str = None, additional_prompt: str = None) -> LlmStageOutput:
     """First stage of processing - extract structured data"""
     try:
         # Try to use specific user's data if user_id provided
@@ -64,14 +55,21 @@ async def process_stage_one(text: str, user_id: str = None) -> LlmStageOutput:
             except Exception:
                 # Fallback to default data if MongoDB is not available
                 data = load_default_prompt_files_data()
-        system_message = data["few_shot_prompt"].format(
-            words_spelling=data["words_spelling"],
-            LLM_TEXT_PROCESSOR_OUTPUT_FORMAT=json.dumps(
-                LLM_TEXT_PROCESSOR_OUTPUT_FORMAT
-            ),
-            few_shot_examples=data["examples"],
-            important_notes=data["important_notes"],
-        )
+        
+        # Prepare system message
+        format_data = {
+            "words_spelling": data["words_spelling"],
+            "few_shot_examples": data["examples"],
+            "important_notes": data["important_notes"],
+        }
+        system_message = data["few_shot_prompt"]
+        for key, value in format_data.items():
+            system_message = system_message.replace("{" + key + "}", value)
+        
+        # Add additional prompt if provided
+        if additional_prompt:
+            system_message += f"\n\nAdditional Instructions: {additional_prompt}"
+        
         print("Starting stage 1 processing...")
         response = await structured_llm.ainvoke(
             [SystemMessage(content=system_message), HumanMessage(content=text)],
@@ -129,9 +127,6 @@ async def process_stage_two(
         
         # Important notes 
         {json.dumps(prompts_data['important_notes'])}
-        
-        # Output format
-        {json.dumps(LLM_TEXT_PROCESSOR_OUTPUT_FORMAT)}
         """
         response = await structured_llm.ainvoke(
             [
@@ -148,12 +143,16 @@ async def process_stage_two(
         raise
 
 
-async def process_single_text(text: str, user_id: str = None) -> LlmStageOutput:
+async def process_single_text(text: str, user_id: str = None, additional_prompt: str = None,) -> LlmStageOutput:
     """Process a single text and return LlmStageOutput"""
     # Stage 1 & 2 processing
-    stage_one_result = await process_stage_one(text, user_id)
+    stage_one_result = await process_stage_one(text, user_id, additional_prompt)
     final_llm_res = await process_stage_two(stage_one_result, user_id)
-    return final_llm_res
+    final_llm_res_dict = final_llm_res.model_dump()
+    for key, value in final_llm_res_dict.items():
+        if value is None:
+            final_llm_res_dict[key] = "_"
+    return LlmStageOutput(**final_llm_res_dict)
 
 
 async def transcribe_single_audio(audio_bytes: bytes, filename: str) -> str:

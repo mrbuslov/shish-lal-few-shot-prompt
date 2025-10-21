@@ -62,6 +62,7 @@ async def process_text(
         )
 
 
+
 @router.post("/process_documents")
 async def process_documents(
     request: UploadBase64Request, current_user: User = Depends(get_current_user)
@@ -149,7 +150,9 @@ async def process_documents(
 
 @router.post("/process_audio")
 async def process_audio(
-    files: List[UploadFile] = File(...), current_user: User = Depends(get_current_user)
+    files: List[UploadFile] = File(...), 
+    processing_type: str = Form("transcription"),
+    current_user: User = Depends(get_current_user)
 ) -> JSONResponse:
     try:
         # Prepare transcription tasks for async processing
@@ -182,9 +185,14 @@ async def process_audio(
         processing_tasks = {}
         for i, transcription_result in enumerate(transcription_results):
             if not isinstance(transcription_result, Exception):
+                # Determine additional prompt based on processing type
+                additional_prompt = None
+                if processing_type == "dictation":
+                    additional_prompt = "You must keep everything that is dictated exactly as spoken, preserving every word while formatting according to the examples provided."
+                
                 # Second gather: process all transcriptions as text
                 processing_task = process_single_text(
-                    transcription_result, str(current_user.id)
+                    transcription_result, str(current_user.id), additional_prompt=additional_prompt
                 )
                 processing_tasks[i] = {
                     "task": processing_task,
@@ -211,13 +219,14 @@ async def process_audio(
         for i, result in enumerate(processing_results):
             if not isinstance(result, Exception):
                 result_dict = result.model_dump()
-                result_dict["source_type"] = "audio"
+                source_type = "audio_dictation" if processing_type == "dictation" else "audio"
+                result_dict["source_type"] = source_type
                 json_results.append(result_dict)
 
                 # Save to database
                 await transcription_facade.create(
                     user_id=str(current_user.id),
-                    source_type="audio",
+                    source_type=source_type,
                     source_text=processing_tasks[i]['transcribed_text'],
                     processing_result=result_dict,
                 )
@@ -244,9 +253,13 @@ async def process_audio(
 
 @router.post("/download_docx")
 async def download_docx(
-    data: LlmStageOutput, current_user: User = Depends(get_current_user)
+    request: dict, current_user: User = Depends(get_current_user)
 ) -> JSONResponse:
     try:
+        # Extract data and patient_name from request
+        data = LlmStageOutput(**request.get('data', {}))
+        patient_name = request.get('patient_name')
+        
         # Get user-specific template path or default
         from src.utils.utils import load_prompt_files, load_default_prompt_files_data
 
@@ -295,13 +308,34 @@ async def download_docx(
         os.remove(temp_path)
 
         # Extract patient name for filename
-        patient_name = data_dict.get("recipients_info", "").strip()
-        if patient_name:
-            # Clean patient name for safe filename
+        final_patient_name = patient_name
+        if not final_patient_name:
+            # Fallback to extracting from recipients_info
+            recipients_info = data_dict.get("recipients_info", "").strip()
+            if recipients_info:
+                # Convert HTML to text and take first line only
+                import re
+                # Remove HTML tags
+                text_only = re.sub(r'<[^>]+>', '', recipients_info)
+                # Take first line only
+                first_line = text_only.split("\n")[0]
+                final_patient_name = first_line.strip() if first_line else None
+        
+        if final_patient_name:
+            # Remove "Patient Name:" prefix if present
             import re
-            safe_name = re.sub(r'[^\w\s-]', '', patient_name)
-            safe_name = re.sub(r'[\s_]+', '_', safe_name)
-            filename = f"{safe_name}_medical_report.docx"
+            cleaned_name = re.sub(r'^Patient Name:\s*', '', final_patient_name, flags=re.IGNORECASE)
+            
+            # Clean patient name for safe filename - preserve hashtags, allow spaces
+            # Remove only characters that are truly unsafe for filenames
+            safe_name = re.sub(r'[<>:"/\\|?*]', '', cleaned_name)
+            safe_name = safe_name.strip()
+            
+            # Only use the patient name if it's not empty after cleaning
+            if safe_name:
+                filename = safe_name + ".docx"
+            else:
+                filename = "medical_report.docx"
         else:
             filename = "medical_report.docx"
 
