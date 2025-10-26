@@ -59,19 +59,19 @@
     
     <div class="container">
         <h1 id="doctorName">Dr. Loading...</h1>
-        <p class="subtitle"><b>YourScribe</b> - AI-powered analysis of medical conversations</p>
+        <p class="subtitle"><b>YourScribe</b></p>
         
         <!-- Tab Navigation -->
         <div class="tab-container">
             <div class="tabs">
-                <button class="tab active" data-tab="textarea">Transcription</button>
-                <button class="tab" data-tab="documents">Document Transcriptions</button>
+                <button class="tab active" data-tab="recording">Recording</button>
                 <button class="tab" data-tab="audio">Audio Files</button>
-                <button class="tab" data-tab="recording">Recording</button>
+                <button class="tab" data-tab="textarea">Text Input</button>
+                <button class="tab" data-tab="documents">Document Upload</button>
             </div>
             
             <!-- Tab 1: Textarea (Existing) -->
-            <div class="tab-content active" id="textarea">
+            <div class="tab-content" id="textarea">
                 <form id="textForm">
                     <div class="form-group">
                         <label for="textInput">Enter medical text for processing:</label>
@@ -135,7 +135,7 @@
             </div>
             
             <!-- Tab 4: Recording -->
-            <div class="tab-content" id="recording">
+            <div class="tab-content active" id="recording">
                 <div class="form-group">
                     <label>Record Audio via Microphone:</label>
                     

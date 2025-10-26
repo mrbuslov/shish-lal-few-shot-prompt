@@ -889,7 +889,7 @@ downloadRecordBtn.addEventListener('click', function() {
     const url = URL.createObjectURL(audioPlayback.recordedBlob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `recording_${new Date().toISOString().replace(/[:.]/g, '-')}.webm`;
+    a.download = `recording_${new Date().toISOString().replace(/[:.]/g, '-')}.mp3`;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
