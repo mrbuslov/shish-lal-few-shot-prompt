@@ -188,7 +188,11 @@ async def process_audio(
                 # Determine additional prompt based on processing type
                 additional_prompt = None
                 if processing_type == "dictation":
-                    additional_prompt = "You must keep everything that is dictated exactly as spoken in the letter content, preserving every word. However, when explicit field instructions are dictated (such as 'Plan: [content]', 'Diagnosis: [content]', etc.), extract that information to the appropriate field AND remove the explicit field instruction from the letter body. The letter should flow naturally without showing the dictated field labels."
+                    additional_prompt = f"""
+                    "You must keep everything that is dictated exactly as spoken in the letter content, preserving every word. 
+                    However, when explicit field instructions are dictated (that can belong to these fields: {LlmStageOutput.model_fields.keys()}), extract that information to the appropriate field AND remove the explicit field instruction from the letter body. 
+                    The letter should flow naturally without showing the dictated field labels."
+                    """
                 
                 # Second gather: process all transcriptions as text
                 processing_task = process_single_text(
