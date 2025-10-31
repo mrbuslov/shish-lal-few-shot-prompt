@@ -1,8 +1,10 @@
+import subprocess
 import os
 import tempfile
 import time
 import asyncio
 from io import BytesIO
+import uuid
 
 from docx import Document
 from openai import AsyncOpenAI
@@ -153,53 +155,94 @@ async def transcribe_audio_with_openai(audio_bytes: bytes, filename: str) -> str
     except Exception as e:
         print(f"Error in audio transcription: {str(e)}")
         raise
+    
 
+def split_audio_ffmpeg(audio_file_path: str, chunk_length_minutes: int = 10):
+    os.makedirs("temp", exist_ok=True)
+    
+    session_id = uuid.uuid4().hex[:8]
+    chunk_length_sec = chunk_length_minutes * 60
+
+    result = subprocess.run(
+        ["ffprobe", "-v", "error", "-show_entries", "format=duration", "-of",
+         "default=noprint_wrappers=1:nokey=1", audio_file_path],
+        capture_output=True, text=True
+    )
+    duration = float(result.stdout.strip())
+    ext = "mp3"
+    chunk_paths = []
+
+    try:
+        for i in range(0, int(duration), chunk_length_sec):
+            chunk_path = f"temp/chunk_{session_id}_{i//chunk_length_sec}.{ext}"
+            subprocess.run([
+                "ffmpeg", "-y",
+                "-hide_banner", "-loglevel", "error",
+                "-ss", str(i),
+                "-t", str(chunk_length_sec),
+                "-i", audio_file_path,
+                "-ar", "44100",
+                "-ac", "2",
+                "-b:a", "192k",
+                chunk_path
+            ], check=True)
+            chunk_paths.append(chunk_path)
+        
+        return chunk_paths
+    
+    except Exception as e:
+        # Если что-то пошло не так, удаляем созданные файлы
+        for path in chunk_paths:
+            if os.path.exists(path):
+                os.remove(path)
+        raise e
 
 def split_audio_into_chunks(
-    audio_file_path: str, chunk_length_minutes: int = 10
+    audio_file_path: str, chunk_length_minutes: int = 10,
 ) -> list:
     """Split audio file into chunks of specified length in minutes"""
     try:
-        # Load audio file
-        audio = AudioSegment.from_file(audio_file_path)
+        return split_audio_ffmpeg(audio_file_path, chunk_length_minutes)
+        # # Load audio file
+        # audio = AudioSegment.from_file(audio_file_path)
 
-        # Convert minutes to milliseconds
-        chunk_length_ms = chunk_length_minutes * 60 * 1000
+        # # Convert minutes to milliseconds
+        # chunk_length_ms = chunk_length_minutes * 60 * 1000
 
-        # If audio is shorter than chunk length, return empty list (will use original file)
-        if len(audio) <= chunk_length_ms:
-            return []
+        # # If audio is shorter than chunk length, return empty list (will use original file)
+        # if len(audio) <= chunk_length_ms:
+        #     return []
 
-        chunk_paths = []
-        total_chunks = len(audio) // chunk_length_ms + (
-            1 if len(audio) % chunk_length_ms > 0 else 0
-        )
+        # chunk_paths = []
+        # total_chunks = len(audio) // chunk_length_ms + (
+        #     1 if len(audio) % chunk_length_ms > 0 else 0
+        # )
 
-        print(
-            f"Splitting audio into {total_chunks} chunks of {chunk_length_minutes} minutes each"
-        )
+        # print(
+        #     f"Splitting audio into {total_chunks} chunks of {chunk_length_minutes} minutes each"
+        # )
 
-        # Create temp directory if it doesn't exist
-        temp_dir = "temp"
-        os.makedirs(temp_dir, exist_ok=True)
+        # # Create temp directory if it doesn't exist
+        # temp_dir = "temp"
+        # os.makedirs(temp_dir, exist_ok=True)
 
-        for i in range(0, len(audio), chunk_length_ms):
-            chunk = audio[i : i + chunk_length_ms]
+        # for i in range(0, len(audio), chunk_length_ms):
+        #     chunk = audio[i : i + chunk_length_ms]
 
-            # Create temporary file for chunk in temp directory
-            chunk_file_ext = os.path.splitext(audio_file_path)[1]
-            with tempfile.NamedTemporaryFile(
-                delete=False, suffix=chunk_file_ext, dir=temp_dir
-            ) as chunk_file:
-                chunk_path = chunk_file.name
+        #     # Create temporary file for chunk in temp directory
+        #     chunk_file_ext = os.path.splitext(audio_file_path)[1]
+        #     with tempfile.NamedTemporaryFile(
+        #         delete=False, suffix=chunk_file_ext, dir=temp_dir
+        #     ) as chunk_file:
+        #         chunk_path = chunk_file.name
 
-            # Export chunk to file
-            chunk.export(
-                chunk_path, format=chunk_file_ext[1:]
-            )  # Remove the dot from extension
-            chunk_paths.append(chunk_path)
+        #     # Export chunk to file
+        #     chunk.export(
+        #         chunk_path, format=chunk_file_ext[1:]
+        #     )  # Remove the dot from extension
+        #     chunk_paths.append(chunk_path)
 
-        return chunk_paths
+        # return chunk_paths
 
     except Exception as e:
         print(f"Error splitting audio into chunks: {str(e)}")
